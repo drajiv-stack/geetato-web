@@ -1,0 +1,375 @@
+/* Updated: 2025-12-02T14:03:43.870Z */
+/* Updated: 2025-12-01T05:08:55.983Z */
+/* Updated: 2025-11-30T15:08:23.717Z */
+/* Updated: 2025-11-30T15:07:51.245Z */
+/* Updated: 2025-11-28T05:25:02.621Z */
+/* Updated: 2025-11-27T08:35:21.298Z */
+/* Updated: 2025-11-25T11:18:26.131Z */
+/* Updated: 2025-11-25T11:18:20.393Z */
+/* Updated: 2025-11-24T12:46:26.494Z */
+/* Updated: 2025-11-24T12:19:33.905Z */
+/* Updated: 2025-11-24T06:54:12.674Z */
+/* Updated: 2025-11-23T16:16:30.602Z */
+/* Updated: 2025-11-23T16:14:54.315Z */
+/* Updated: 2025-11-23T16:14:29.350Z */
+/* Updated: 2025-11-21T06:15:05.505Z */
+/* Updated: 2025-11-21T06:12:13.572Z */
+/* Updated: 2025-11-21T06:10:15.727Z */
+/* Updated: 2025-11-21T06:07:52.410Z */
+/* Updated: 2025-11-20T06:58:31.162Z */
+/* Updated: 2025-11-18T08:39:36.285Z */
+/* Updated: 2025-11-18T06:40:22.269Z */
+/* Updated: 2025-11-17T13:35:47.077Z */
+/* Updated: 2025-11-17T09:30:46.954Z */
+/* Updated: 2025-11-17T09:30:34.887Z */
+/* Updated: 2025-11-14T10:41:33.415Z */
+/* Updated: 2025-11-14T10:34:56.884Z */
+/* Updated: 2025-11-14T06:58:35.680Z */
+/* Updated: 2025-11-10T05:51:24.119Z */
+/* Updated: 2025-11-09T08:17:14.503Z */
+/* Updated: 2025-11-08T08:15:17.687Z */
+/* Updated: 2025-11-08T08:08:06.951Z */
+/* Updated: 2025-11-08T07:26:51.552Z */
+/* Updated: 2025-11-08T06:34:19.014Z */
+/* Updated: 2025-11-08T05:41:51.698Z */
+/* Updated: 2025-11-06T05:19:38.617Z */
+/* Updated: 2025-11-04T17:19:43.171Z */
+/* Updated: 2025-11-04T16:12:56.616Z */
+/* Updated: 2025-11-02T05:24:56.501Z */
+/* Updated: 2025-11-01T15:28:45.476Z */
+/* Updated: 2025-10-31T17:24:24.056Z */
+/* Updated: 2025-10-31T07:36:44.993Z */
+/* Updated: 2025-10-31T05:22:41.775Z */
+/* Updated: 2025-10-30T16:27:17.618Z */
+/* Updated: 2025-10-30T16:13:21.696Z */
+/* Updated: 2025-10-30T15:21:47.606Z */
+/* Updated: 2025-10-30T10:38:32.649Z */
+/* Updated: 2025-10-30T08:54:46.356Z */
+/* Updated: 2025-10-30T06:45:16.527Z */
+/* Updated: 2025-10-30T06:39:52.179Z */
+/* Updated: 2025-10-30T03:35:54.721Z */
+/* Updated: 2025-10-30T03:34:15.361Z */
+/* Updated: 2025-10-25T15:59:38.518Z */
+/* Updated: 2025-10-25T13:33:31.762Z */
+/* Updated: 2025-10-25T13:07:56.364Z */
+/* Updated: 2025-10-25T04:15:40.011Z */
+/* Updated: 2025-10-25T03:47:17.788Z */
+/* Updated: 2025-10-25T03:46:59.921Z */
+/* Updated: 2025-10-24T08:30:55.551Z */
+/* Updated: 2025-10-22T08:48:08.079Z */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@400;500;600;700;800;900&family=Work+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-heading: 'Lexend', 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-accent: 'Work Sans', sans-serif;
+  
+  /* Geetato Brand Colors - 2025 Trend Update */
+  --color-geetato-pink: var(--geetato-pink);
+  --color-bakery-cream: var(--bakery-cream);
+  --color-cocoa-brown: var(--cocoa-brown);
+  --color-pistachio-green: var(--pistachio-green);
+  --color-golden-amber: var(--golden-amber);
+  --color-charcoal: var(--charcoal);
+  --color-off-white: var(--off-white);
+  
+  /* 2025 Trend Colors */
+  --color-mocha-mousse: var(--mocha-mousse);
+  --color-digital-lavender: var(--digital-lavender);
+  --color-verdant-green: var(--verdant-green);
+  --color-warm-terracotta: var(--warm-terracotta);
+  --color-shimmery-blue: var(--shimmery-blue);
+  --color-scarlet-smile: var(--scarlet-smile);
+  
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 1.25rem;
+  
+  /* Geetato Brand Colors - Refreshed for 2025 */
+  --geetato-pink: #E85D75; /* Updated to Scarlet Smile - warmer, more sophisticated */
+  --bakery-cream: #FAF0E6; /* Warmer cream with hint of mocha */
+  --cocoa-brown: #5D4037; /* Deeper, richer brown */
+  --pistachio-green: #88A85D; /* Verdant Green - more saturated, grounded */
+  --golden-amber: #F4A261; /* Warm terracotta-amber blend */
+  --charcoal: #2C2C2E; /* Softer charcoal for modern feel */
+  --off-white: #FAFAF8; /* Warmer off-white */
+  
+  /* 2025 Pantone & Trend Colors */
+  --mocha-mousse: #A67C52; /* Pantone Color of the Year 2025 */
+  --digital-lavender: #D4A5D4; /* Soft, grounded lavender */
+  --verdant-green: #7BA05B; /* Nature-inspired green */
+  --warm-terracotta: #E27D60; /* Warm, inviting accent */
+  --shimmery-blue: #89CFF0; /* Sky-inspired blue */
+  --scarlet-smile: #E85D75; /* Decadent, glamorous red-pink */
+  
+  /* Base Colors mapped to 2025 palette */
+  --background: #FAFAF8;
+  --foreground: #2C2C2E;
+  --card: #FFFFFF;
+  --card-foreground: #2C2C2E;
+  --popover: #FFFFFF;
+  --popover-foreground: #2C2C2E;
+  --primary: #E85D75;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4A261;
+  --secondary-foreground: #2C2C2E;
+  --muted: #FAF0E6;
+  --muted-foreground: #5D4037;
+  --accent: #88A85D;
+  --accent-foreground: #2C2C2E;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #E8E5E1;
+  --input: #E8E5E1;
+  --ring: #E85D75;
+  --chart-1: #E85D75;
+  --chart-2: #F4A261;
+  --chart-3: #88A85D;
+  --chart-4: #A67C52;
+  --chart-5: #D4A5D4;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2C2C2E;
+  --sidebar-primary: #E85D75;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FAF0E6;
+  --sidebar-accent-foreground: #2C2C2E;
+  --sidebar-border: #E8E5E1;
+  --sidebar-ring: #E85D75;
+}
+
+.dark {
+  --background: #1C1C1E;
+  --foreground: #FAFAF8;
+  --card: #2C2C2E;
+  --card-foreground: #FAFAF8;
+  --popover: #2C2C2E;
+  --popover-foreground: #FAFAF8;
+  --primary: #E85D75;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4A261;
+  --secondary-foreground: #1C1C1E;
+  --muted: #5D4037;
+  --muted-foreground: #FAF0E6;
+  --accent: #88A85D;
+  --accent-foreground: #FAFAF8;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #3C3C3E;
+  --input: #3C3C3E;
+  --ring: #E85D75;
+  --sidebar: #2C2C2E;
+  --sidebar-foreground: #FAFAF8;
+  --sidebar-primary: #E85D75;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #3C3C3E;
+  --sidebar-accent-foreground: #FAFAF8;
+  --sidebar-border: #3C3C3E;
+  --sidebar-ring: #E85D75;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar - Updated with 2025 colors */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--bakery-cream);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--scarlet-smile);
+    border-radius: 5px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--warm-terracotta);
+  }
+  
+  /* Paper texture overlay */
+  .paper-texture {
+    position: relative;
+  }
+  
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03' /%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  
+  /* Flowing divider */
+  .flowing-divider {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .flowing-divider::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: currentColor;
+    clip-path: path('M0,20 Q250,0 500,20 T1000,20 T1500,20 L1500,60 L0,60 Z');
+  }
+  
+  /* 3D Card Effects - Enhanced with 2025 gradient */
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  
+  .card-3d:hover {
+    transform: translateY(-12px) rotateX(5deg) rotateY(-5deg);
+  }
+  
+  .card-3d::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(232, 93, 117, 0.1), rgba(244, 162, 97, 0.1), rgba(212, 165, 212, 0.08));
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: inherit;
+    z-index: -1;
+  }
+  
+  .card-3d:hover::before {
+    opacity: 1;
+  }
+  
+  /* Floating animation */
+  @keyframes float-3d {
+    0%, 100% {
+      transform: translateY(0) translateZ(0);
+    }
+    50% {
+      transform: translateY(-20px) translateZ(20px);
+    }
+  }
+  
+  .float-3d {
+    animation: float-3d 6s ease-in-out infinite;
+  }
+  
+  /* Perspective container */
+  .perspective-container {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+  
+  /* Layered shadow for depth - Updated with warmer tones */
+  .shadow-3d {
+    box-shadow: 
+      0 1px 2px rgba(166, 124, 82, 0.07),
+      0 2px 4px rgba(166, 124, 82, 0.07),
+      0 4px 8px rgba(166, 124, 82, 0.07),
+      0 8px 16px rgba(232, 93, 117, 0.08),
+      0 16px 32px rgba(232, 93, 117, 0.09);
+  }
+  
+  /* 3D Button - Enhanced with 2025 color */
+  .btn-3d {
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  
+  .btn-3d:hover {
+    transform: translateY(-4px) translateZ(20px);
+    box-shadow: 0 12px 24px rgba(232, 93, 117, 0.35), 0 6px 12px rgba(244, 162, 97, 0.2);
+  }
+  
+  .btn-3d:active {
+    transform: translateY(-2px) translateZ(10px);
+  }
+  
+  /* 2025 Gradient Backgrounds */
+  .gradient-2025-warm {
+    background: linear-gradient(135deg, var(--warm-terracotta), var(--golden-amber), var(--mocha-mousse));
+  }
+  
+  .gradient-2025-nature {
+    background: linear-gradient(135deg, var(--verdant-green), var(--pistachio-green), var(--shimmery-blue));
+  }
+  
+  .gradient-2025-elegant {
+    background: linear-gradient(135deg, var(--scarlet-smile), var(--digital-lavender), var(--mocha-mousse));
+  }
+  
+  /* Mocha Mousse accent elements */
+  .accent-mocha {
+    color: var(--mocha-mousse);
+  }
+  
+  .bg-mocha {
+    background-color: var(--mocha-mousse);
+  }
+  
+  .border-mocha {
+    border-color: var(--mocha-mousse);
+  }
+}
+
+/* Hide Next.js error overlay portal */
+nextjs-portal {
+  display: none !important;
+}
