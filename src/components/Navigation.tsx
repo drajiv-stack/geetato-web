@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ShoppingBag, Search, User, ChevronDown, Leaf, Heart, Shield, Zap, Calculator, BookOpen, GitCompare, Sparkles, Package, Cookie, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, Search, User, ChevronDown, Leaf, Heart, Shield, Zap, Calculator, BookOpen, GitCompare, Sparkles, Package, Cookie, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,13 @@ const b2bDropdown = [
   href: "/b2b-solutions/bread-wholesale",
   description: "63+ premium breads for B2B clients",
   badge: "NEW"
+},
+{
+  name: "Export Partner - Desi",
+  icon: Package,
+  href: "/export-partner",
+  description: "Global export partnership opportunities",
+  badge: "NEW"
 }];
 
 
@@ -103,7 +110,6 @@ export default function Navigation() {
   const [showB2BDropdown, setShowB2BDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [cartCount] = useState(0);
   const pathname = usePathname();
   const { data: session, isPending, refetch } = useSession();
   const router = useRouter();
@@ -115,6 +121,23 @@ export default function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleSignOut = async () => {
     const token = localStorage.getItem("bearer_token");
@@ -146,20 +169,20 @@ export default function Navigation() {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 !w-full !h-[69px] ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isScrolled ?
-      "bg-white/95 backdrop-blur-md shadow-3d py-3" :
-      "bg-white/90 backdrop-blur-sm py-4"}`
+      "bg-white/95 backdrop-blur-md shadow-3d py-2" :
+      "bg-white/90 backdrop-blur-sm py-3"}`
       }>
 
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo with 3D effect */}
-          <Link href="/" className="flex items-center gap-3 group perspective-container">
+          <Link href="/" className="flex items-center gap-3 group perspective-container z-50">
             <motion.img
               src="https://geetato.com/wp-content/uploads/2025/09/logo-file1.png"
               alt="Geetato Logo"
-              className="h-12 w-auto transition-transform duration-300"
+              className="h-8 sm:h-10 w-auto transition-transform duration-300"
               whileHover={{ rotateY: 10, scale: 1.1 }}
               style={{ transformStyle: "preserve-3d" }} />
 
@@ -297,22 +320,6 @@ export default function Navigation() {
               </Button>
             </motion.div>
 
-            {/* Subscriptions Button */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-[#F4A261] hover:bg-[#F4A261]/10 rounded-full"
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                <Link href="/subscriptions">
-                  <Package className="w-4 h-4 mr-2" />
-                  Subscribe
-                </Link>
-              </Button>
-            </motion.div>
-
             {/* Search Button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -383,29 +390,12 @@ export default function Navigation() {
                 </motion.button>
               </Link>
             )}
-
-            {/* Cart Button */}
-            <Button
-              asChild
-              className="bg-[#F4A261] hover:bg-[#E27D60] text-[#2C2C2E] font-bold rounded-full btn-3d relative"
-              style={{ fontFamily: "var(--font-accent)" }}>
-
-              <Link href="/cart">
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                Cart
-                {cartCount > 0 &&
-                <span className="absolute -top-1 -right-1 bg-[#E85D75] text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                }
-              </Link>
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 text-[#2C2C2E]"
+            className="lg:hidden p-2 text-[#2C2C2E] z-50 relative"
             aria-label="Toggle menu">
 
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -414,13 +404,12 @@ export default function Navigation() {
 
         {/* Search Bar */}
         <AnimatePresence>
-          {showSearch &&
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 relative">
-
+          {showSearch && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5D4037]/40" />
                 <Input
@@ -455,144 +444,148 @@ export default function Navigation() {
                 </motion.div>
             }
             </motion.div>
-          }
+          )}
         </AnimatePresence>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Fixed Overlay */}
         <AnimatePresence>
-          {isOpen &&
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden mt-4 pb-4">
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-0 bg-white z-40 lg:hidden"
+              style={{ top: isScrolled ? '60px' : '72px' }}>
 
-              {/* Mobile Search */}
-              <div className="mb-4 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5D4037]/40" />
-                <Input
-                type="text"
-                placeholder="Search products..."
-                className="pl-10 w-full rounded-2xl" />
+              <div className="h-full overflow-y-auto pb-20 px-4 sm:px-6 pt-6">
+                {/* Mobile Search */}
+                <div className="mb-6 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5D4037]/40" />
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    className="pl-10 w-full rounded-2xl" />
+                </div>
 
-              </div>
-
-              <div className="flex flex-col gap-4">
-                {navLinks.map((link) =>
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={`font-bold text-base transition-colors ${
-                pathname === link.href ?
-                "text-[#E85D75]" :
-                "text-[#2C2C2E]"}`
-                }
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                    {link.label}
-                  </Link>
-              )}
-
-                {/* Mobile B2B Links */}
-                <Link
-                href="/b2b-solutions/bread-wholesale"
-                onClick={() => setIsOpen(false)}
-                className="font-bold text-base text-[#F4A261] flex items-center gap-2"
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                  <Cookie className="w-4 h-4" />
-                  Bread Wholesale
-                  <span className="bg-[#E85D75] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
-                </Link>
-
-                {/* Mobile-specific links */}
-                <Link
-                href="/quiz"
-                onClick={() => setIsOpen(false)}
-                className="font-bold text-base text-[#88A85D]"
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                  Take Quiz
-                </Link>
-                <Link
-                href="/wishlist"
-                onClick={() => setIsOpen(false)}
-                className="font-bold text-base text-[#E85D75]"
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                  Wishlist
-                </Link>
-                <Link
-                href="/subscriptions"
-                onClick={() => setIsOpen(false)}
-                className="font-bold text-base text-[#F4A261]"
-                style={{ fontFamily: "var(--font-accent)" }}>
-
-                  Subscriptions
-                </Link>
-                
-                <div className="flex gap-2 pt-4 border-t border-[#E85D75]/20">
-                  {!isPending && session?.user ? (
-                    <>
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
-                        <Link href="/dashboard">
-                          <LayoutDashboard className="w-4 h-4 mr-2" />
-                          Dashboard
-                        </Link>
-                      </Button>
-                      <Button
-                        onClick={handleSignOut}
-                        variant="outline"
-                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
-                        <Link href="/login">
-                          <User className="w-4 h-4 mr-2" />
-                          Login
-                        </Link>
-                      </Button>
-                      <Button
-                        asChild
-                        className="flex-1 bg-[#F4A261] text-[#2C2C2E] font-bold rounded-full"
-                        style={{ fontFamily: "var(--font-accent)" }}>
-                        <Link href="/register">
-                          Sign Up
-                        </Link>
-                      </Button>
-                    </>
+                <div className="flex flex-col gap-4">
+                  {navLinks.map((link) =>
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`font-bold text-lg transition-colors ${
+                        pathname === link.href ?
+                        "text-[#E85D75]" :
+                        "text-[#2C2C2E]"}`
+                      }
+                      style={{ fontFamily: "var(--font-accent)" }}>
+                      {link.label}
+                    </Link>
                   )}
+
+                  {/* Mobile B2B Links */}
+                  <Link
+                    href="/b2b-solutions/bread-wholesale"
+                    onClick={() => setIsOpen(false)}
+                    className="font-bold text-base text-[#F4A261] flex items-center gap-2"
+                    style={{ fontFamily: "var(--font-accent)" }}>
+                    <Cookie className="w-4 h-4" />
+                    Bread Wholesale
+                    <span className="bg-[#E85D75] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+                  </Link>
+
+                  <Link
+                    href="/export-partner"
+                    onClick={() => setIsOpen(false)}
+                    className="font-bold text-base text-[#F4A261] flex items-center gap-2"
+                    style={{ fontFamily: "var(--font-accent)" }}>
+                    <Package className="w-4 h-4" />
+                    Export Partner
+                    <span className="bg-[#E85D75] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+                  </Link>
+
+                  {/* Mobile-specific links */}
+                  <Link
+                    href="/quiz"
+                    onClick={() => setIsOpen(false)}
+                    className="font-bold text-base text-[#88A85D]"
+                    style={{ fontFamily: "var(--font-accent)" }}>
+                    Take Quiz
+                  </Link>
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setIsOpen(false)}
+                    className="font-bold text-base text-[#E85D75]"
+                    style={{ fontFamily: "var(--font-accent)" }}>
+                    Wishlist
+                  </Link>
+                  
+                  <div className="flex gap-2 pt-4 border-t border-[#E85D75]/20">
+                    {!isPending && session?.user ? (
+                      <>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                          <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                            <LayoutDashboard className="w-4 h-4 mr-2" />
+                            Dashboard
+                          </Link>
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            handleSignOut();
+                            setIsOpen(false);
+                          }}
+                          variant="outline"
+                          className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                          <Link href="/login" onClick={() => setIsOpen(false)}>
+                            <User className="w-4 h-4 mr-2" />
+                            Login
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          className="flex-1 bg-[#F4A261] text-[#2C2C2E] font-bold rounded-full"
+                          style={{ fontFamily: "var(--font-accent)" }}>
+                          <Link href="/register" onClick={() => setIsOpen(false)}>
+                            Sign Up
+                          </Link>
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
-          }
+          )}
         </AnimatePresence>
       </nav>
 
       {/* Mega Menu */}
       <AnimatePresence>
-        {showMegaMenu &&
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          onMouseEnter={() => setShowMegaMenu(true)}
-          onMouseLeave={() => setShowMegaMenu(false)}
-          className="absolute top-full left-0 right-0 bg-white shadow-3d border-t border-[#E85D75]/10">
+        {showMegaMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            onMouseEnter={() => setShowMegaMenu(true)}
+            onMouseLeave={() => setShowMegaMenu(false)}
+            className="absolute top-full left-0 right-0 bg-white shadow-3d border-t border-[#E85D75]/10 hidden lg:block">
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="grid grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                 {productCategories.map((category, idx) =>
               <motion.div
                 key={category.name}
@@ -646,7 +639,7 @@ export default function Navigation() {
               </div>
             </div>
           </motion.div>
-        }
+        )}
       </AnimatePresence>
     </motion.header>);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, Heart, Leaf, Shield, Award, Users, Package, Star, Globe, Play, CheckCircle, MessageCircle, X, Plus, Minus, Instagram, Camera, Eye, ExternalLink } from "lucide-react";
+import { ArrowRight, Sparkles, Heart, Leaf, Shield, Award, Users, Package, Star, Globe, Play, CheckCircle, MessageCircle, X, Plus, Minus, Instagram, Camera, Eye, ExternalLink, UserPlus, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
@@ -215,6 +215,8 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [showVideo, setShowVideo] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<typeof products[0] | null>(null);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<typeof products[0] | null>(null);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const { data: session, isPending } = useSession();
   const router = useRouter();
@@ -233,9 +235,10 @@ export default function Home() {
   const handleExpressInterest = async (product: typeof products[0]) => {
     // Check if user is logged in
     if (!session?.user) {
-      toast.error("Please login to add items to your wishlist");
+      // Show signup modal instead of immediate redirect
+      setPendingProduct(product);
+      setShowSignupModal(true);
       setQuickViewProduct(null);
-      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
@@ -724,10 +727,122 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Signup Modal */}
+      <AnimatePresence>
+        {showSignupModal && pendingProduct && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowSignupModal(false);
+                setPendingProduct(null);
+              }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 flex items-center justify-center"
+            >
+              <Card className="w-full max-w-md bg-white rounded-3xl shadow-3d p-8">
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setShowSignupModal(false);
+                      setPendingProduct(null);
+                    }}
+                    className="absolute -top-4 -right-4 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                  
+                  {/* Icon */}
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#E85D75] to-[#F4A261] flex items-center justify-center shadow-3d">
+                    <Heart className="w-8 h-8 text-white" />
+                  </div>
+                  
+                  {/* Content */}
+                  <h3 className="text-2xl font-black text-center mb-3 text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
+                    Save Your Interests!
+                  </h3>
+                  
+                  <p className="text-center text-[#5D4037]/70 mb-6 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    Create an account to save <span className="font-bold text-[#E85D75]">{pendingProduct.name}</span> and other products you're interested in. We'll keep you updated on availability and special offers!
+                  </p>
+                  
+                  {/* Product Preview */}
+                  <div className="bg-[#FAF0E6] rounded-2xl p-4 mb-6 flex items-center gap-4">
+                    <img
+                      src={pendingProduct.image}
+                      alt={pendingProduct.name}
+                      className="w-16 h-16 rounded-xl object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold text-sm text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
+                        {pendingProduct.name}
+                      </p>
+                      <p className="text-xs text-[#5D4037]/60">{pendingProduct.category}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        router.push(`/register?redirect=${encodeURIComponent(window.location.pathname)}&product=${pendingProduct.id}`);
+                      }}
+                      className="w-full bg-[#E85D75] hover:bg-[#E85D75]/90 text-white font-bold rounded-full btn-3d"
+                      style={{ fontFamily: "var(--font-accent)" }}
+                    >
+                      <UserPlus className="w-5 h-5 mr-2" />
+                      Create Account
+                    </Button>
+                    
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => {
+                        router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}&product=${pendingProduct.id}`);
+                      }}
+                      className="w-full border-2 border-[#E85D75] text-[#E85D75] hover:bg-[#E85D75] hover:text-white font-bold rounded-full"
+                      style={{ fontFamily: "var(--font-accent)" }}
+                    >
+                      <LogIn className="w-5 h-5 mr-2" />
+                      Already Have Account
+                    </Button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowSignupModal(false);
+                        setPendingProduct(null);
+                        toast.info("You can sign up anytime to save your interests!");
+                      }}
+                      className="text-sm text-[#5D4037]/60 hover:text-[#5D4037] transition-colors py-2"
+                      style={{ fontFamily: "var(--font-body)" }}
+                    >
+                      Continue without account
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Quick View Modal */}
       <AnimatePresence>
-        {quickViewProduct &&
-        <>
+        {quickViewProduct && (
+          <>
             {/* Backdrop */}
             <motion.div
             initial={{ opacity: 0 }}
@@ -866,7 +981,7 @@ export default function Home() {
               </Card>
             </motion.div>
           </>
-        }
+        )}
       </AnimatePresence>
 
       {/* Benefits Section - Updated with Mocha Mousse */}
@@ -1307,6 +1422,6 @@ export default function Home() {
       </section>
 
       <Footer />
-    </div>);
-
+    </div>
+  );
 }

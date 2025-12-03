@@ -137,3 +137,61 @@ export const newsletterSubscriptions = sqliteTable('newsletter_subscriptions', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
 });
+
+// Site Settings table
+export const siteSettings = sqliteTable('site_settings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  settingKey: text('setting_key').notNull().unique(),
+  settingValue: text('setting_value').notNull(),
+  settingType: text('setting_type').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+});
+
+// Products table
+export const products = sqliteTable('products', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  category: text('category'),
+  imageUrl: text('image_url').notNull(),
+  badge: text('badge'),
+  healthGoal: text('health_goal'),
+  rating: text('rating'),
+  reviewsCount: integer('reviews_count').default(0),
+  description: text('description'),
+  protein: text('protein'),
+  carbs: text('carbs'),
+  fat: text('fat'),
+  calories: text('calories'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+});
+
+// Instagram Posts table
+export const instagramPosts = sqliteTable('instagram_posts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  postUrl: text('post_url'),
+  imageUrl: text('image_url').notNull(),
+  caption: text('caption'),
+  likesCount: integer('likes_count').default(0),
+  commentsCount: integer('comments_count').default(0),
+  postedAt: integer('posted_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+});
+
+// Social Credentials table
+export const socialCredentials = sqliteTable('social_credentials', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  platform: text('platform').notNull(),
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
+});
