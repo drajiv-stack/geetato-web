@@ -1,35 +1,29 @@
 import type { NextConfig } from "next";
-import path from "node:path";
+// path import kept only if you need it for other safe configs
+// import path from "node:path";
 
-const LOADER = path.resolve(__dirname, 'src/visual-edits/component-tagger-loader.js');
+// const LOADER = path.resolve(__dirname, 'src/visual-edits/component-tagger-loader.js');
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
-    ],
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" }
+    ]
   },
-  outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  // Remove outputFileTracingRoot for Vercel builds — it can cause path duplication issues.
+  // outputFileTracingRoot: path.resolve(__dirname, '../../'),
+
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true
   },
-  turbopack: {
-    rules: {
-      "*.{jsx,tsx}": {
-        loaders: [LOADER]
-      }
-    }
-  }
+
+  // turbopack custom loader removed — Orchids visual-edit loader breaks Vercel tracing.
+  // If you need turbopack settings later, re-add a minimal object here.
+  // turbopack: {}
 };
 
 export default nextConfig;
