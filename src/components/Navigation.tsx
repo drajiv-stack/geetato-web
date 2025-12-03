@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ShoppingBag, Search, User, ChevronDown, Leaf, Heart, Shield, Zap, Calculator, BookOpen, GitCompare, Sparkles, Package, Cookie } from "lucide-react";
+import { Menu, X, ShoppingBag, Search, User, ChevronDown, Leaf, Heart, Shield, Zap, Calculator, BookOpen, GitCompare, Sparkles, Package, Cookie, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { authClient, useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
 { href: "/products", label: "Products", hasMegaMenu: true },
@@ -102,6 +105,8 @@ export default function Navigation() {
   const [searchQuery, setSearchQuery] = useState("");
   const [cartCount] = useState(0);
   const pathname = usePathname();
+  const { data: session, isPending, refetch } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,6 +115,26 @@ export default function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleSignOut = async () => {
+    const token = localStorage.getItem("bearer_token");
+    const { error } = await authClient.signOut({
+      fetchOptions: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+    
+    if (error?.code) {
+      toast.error(error.code);
+    } else {
+      localStorage.removeItem("bearer_token");
+      refetch();
+      toast.success("Signed out successfully");
+      router.push("/");
+    }
+  };
 
   const filteredSuggestions = searchQuery ?
   searchSuggestions.filter((item) =>
@@ -312,15 +337,52 @@ export default function Navigation() {
               </Link>
             </motion.button>
 
-            {/* Account Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 hover:bg-[#FAF0E6] rounded-full transition-colors"
-              aria-label="Account">
-
-              <User className="w-5 h-5 text-[#2C2C2E]" />
-            </motion.button>
+            {/* Account Button - Updated with auth */}
+            {!isPending && session?.user ? (
+              <div className="relative group">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 p-2 hover:bg-[#FAF0E6] rounded-full transition-colors"
+                  aria-label="Account">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E85D75] to-[#F4A261] flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">{session.user.name?.charAt(0) || "U"}</span>
+                  </div>
+                </motion.button>
+                
+                {/* User Dropdown */}
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white shadow-3d rounded-2xl border-2 border-[#E85D75]/10 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <div className="px-3 py-2 border-b border-[#E85D75]/10">
+                    <p className="font-bold text-sm text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
+                      {session.user.name}
+                    </p>
+                    <p className="text-xs text-[#5D4037]/60">{session.user.email}</p>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#FAF0E6] transition-colors mt-1">
+                    <LayoutDashboard className="w-4 h-4 text-[#E85D75]" />
+                    <span className="text-sm font-semibold">Dashboard</span>
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#FAF0E6] transition-colors text-left">
+                    <LogOut className="w-4 h-4 text-[#E85D75]" />
+                    <span className="text-sm font-semibold">Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Link href="/login">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-2 hover:bg-[#FAF0E6] rounded-full transition-colors"
+                  aria-label="Account">
+                  <User className="w-5 h-5 text-[#2C2C2E]" />
+                </motion.button>
+              </Link>
+            )}
 
             {/* Cart Button */}
             <Button
@@ -471,26 +533,46 @@ export default function Navigation() {
                 </Link>
                 
                 <div className="flex gap-2 pt-4 border-t border-[#E85D75]/20">
-                  <Button
-                  asChild
-                  variant="outline"
-                  className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
-
-                    <Link href="/login">
-                      <User className="w-4 h-4 mr-2" />
-                      Account
-                    </Link>
-                  </Button>
-                  <Button
-                  asChild
-                  className="flex-1 bg-[#F4A261] text-[#2C2C2E] font-bold rounded-full"
-                  style={{ fontFamily: "var(--font-accent)" }}>
-
-                    <Link href="/cart">
-                      <ShoppingBag className="w-4 h-4 mr-2" />
-                      Cart
-                    </Link>
-                  </Button>
+                  {!isPending && session?.user ? (
+                    <>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="w-4 h-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Button
+                        onClick={handleSignOut}
+                        variant="outline"
+                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="flex-1 rounded-full border-2 border-[#E85D75] text-[#E85D75]">
+                        <Link href="/login">
+                          <User className="w-4 h-4 mr-2" />
+                          Login
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        className="flex-1 bg-[#F4A261] text-[#2C2C2E] font-bold rounded-full"
+                        style={{ fontFamily: "var(--font-accent)" }}>
+                        <Link href="/register">
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>

@@ -8,6 +8,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const products = [
 {
@@ -212,6 +215,9 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [showVideo, setShowVideo] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<typeof products[0] | null>(null);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
@@ -224,10 +230,48 @@ export default function Home() {
   products :
   products.filter((p) => p.healthGoal === activeFilter);
 
-  const handleExpressInterest = (product: typeof products[0]) => {
-    // TODO: Implement interest list functionality
-    console.log(`Expressed interest in ${product.name}`);
-    setQuickViewProduct(null);
+  const handleExpressInterest = async (product: typeof products[0]) => {
+    // Check if user is logged in
+    if (!session?.user) {
+      toast.error("Please login to add items to your wishlist");
+      setQuickViewProduct(null);
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+
+    setAddingToWishlist(true);
+
+    try {
+      const token = localStorage.getItem("bearer_token");
+      const response = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          productName: product.name,
+          productImage: product.image
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.status === 409) {
+        toast.info("This product is already in your wishlist!");
+      } else if (response.ok) {
+        toast.success(`${product.name} added to your wishlist!`);
+      } else {
+        toast.error(data.error || "Failed to add to wishlist");
+      }
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      toast.error("Failed to add to wishlist. Please try again.");
+    } finally {
+      setAddingToWishlist(false);
+      setQuickViewProduct(null);
+    }
   };
 
   return (
@@ -623,11 +667,12 @@ export default function Home() {
                           e.preventDefault();
                           handleExpressInterest(product);
                         }}
+                        disabled={addingToWishlist}
                         className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
                         style={{ fontFamily: "var(--font-accent)" }}
                       >
                         <Heart className="w-4 h-4 mr-2" />
-                        Interested
+                        {addingToWishlist ? "Adding..." : "Interested"}
                       </Button>
                       <Button
                         size="sm"
@@ -796,11 +841,12 @@ export default function Home() {
                         <Button
                           size="lg"
                           onClick={() => handleExpressInterest(quickViewProduct)}
+                          disabled={addingToWishlist}
                           className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white font-bold rounded-full btn-3d"
                           style={{ fontFamily: "var(--font-accent)" }}>
 
                           <Heart className="w-5 h-5 mr-2" />
-                          I'm Interested
+                          {addingToWishlist ? "Adding..." : "I'm Interested"}
                         </Button>
                         <Button
                           size="lg"
