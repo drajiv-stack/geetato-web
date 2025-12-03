@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import Navigation from "@/components/Navigation"
 import Footer from "@/components/Footer"
+import { useState } from "react"
+import { toast } from "sonner"
 
 const contactInfo = [
   {
@@ -57,6 +59,80 @@ const faqs = [
 ]
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: ""
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.id]: e.target.value
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const token = localStorage.getItem("bearer_token")
+      const headers: HeadersInit = {
+        "Content-Type": "application/json"
+      }
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
+
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone || null,
+          subject: formData.subject,
+          message: formData.message
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Message sent successfully! We'll get back to you soon.")
+        // Reset form
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: ""
+        })
+      } else {
+        toast.error(data.error || "Failed to send message. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error submitting contact form:", error)
+      toast.error("Failed to send message. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -125,7 +201,7 @@ export default function ContactPage() {
             >
               <div className="mb-8">
                 <h2 className="text-4xl font-black mb-4">
-                  Send Us a <span className="text-[var(--teal)]">Message</span>
+                  Send Us a <span className="text-[#E85D75]">Message</span>
                 </h2>
                 <p className="text-lg text-foreground/70">
                   Fill out the form below and our team will get back to you within 24 hours.
@@ -133,22 +209,30 @@ export default function ContactPage() {
               </div>
 
               <Card className="p-8 border-2">
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name *</Label>
                       <Input 
                         id="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
                         placeholder="John"
                         className="h-12"
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name *</Label>
                       <Input 
                         id="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
                         placeholder="Doe"
                         className="h-12"
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                   </div>
@@ -158,8 +242,12 @@ export default function ContactPage() {
                     <Input 
                       id="email"
                       type="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="john@example.com"
                       className="h-12"
+                      disabled={isSubmitting}
+                      required
                     />
                   </div>
 
@@ -168,8 +256,11 @@ export default function ContactPage() {
                     <Input 
                       id="phone"
                       type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
                       placeholder="+91 98765 43210"
                       className="h-12"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -177,8 +268,12 @@ export default function ContactPage() {
                     <Label htmlFor="subject">Subject *</Label>
                     <Input 
                       id="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
                       placeholder="How can we help you?"
                       className="h-12"
+                      disabled={isSubmitting}
+                      required
                     />
                   </div>
 
@@ -186,17 +281,24 @@ export default function ContactPage() {
                     <Label htmlFor="message">Message *</Label>
                     <Textarea 
                       id="message"
+                      value={formData.message}
+                      onChange={handleChange}
                       placeholder="Tell us more about your inquiry..."
                       rows={6}
                       className="resize-none"
+                      disabled={isSubmitting}
+                      required
                     />
                   </div>
 
                   <Button 
+                    type="submit"
                     size="lg"
-                    className="w-full bg-[var(--orange)] hover:bg-[var(--orange-dark)] text-white font-bold h-14 group"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#E85D75] hover:bg-[#E85D75]/90 text-white font-bold h-14 group"
+                    style={{ fontFamily: "var(--font-accent)" }}
                   >
-                    Send Message
+                    {isSubmitting ? "Sending..." : "Send Message"}
                     <Send className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </form>

@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import Navigation from "@/components/Navigation"
 import Footer from "@/components/Footer"
 import Link from "next/link"
+import { useState } from "react"
+import { toast } from "sonner"
 
 // Corporate Solutions Categories
 const solutions = [
@@ -322,6 +324,84 @@ const stats = [
 ]
 
 export default function B2BSolutionsPage() {
+  const [formData, setFormData] = useState({
+    companyName: "",
+    contactPerson: "",
+    email: "",
+    phone: "",
+    solutionType: "",
+    orderQuantity: "",
+    message: ""
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validation
+    if (!formData.companyName || !formData.contactPerson || !formData.email || !formData.phone || !formData.solutionType || !formData.orderQuantity) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const token = localStorage.getItem("bearer_token")
+      const headers: HeadersInit = {
+        "Content-Type": "application/json"
+      }
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
+
+      const response = await fetch("/api/corporate-enquiry", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          companyName: formData.companyName,
+          contactPerson: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          solutionType: formData.solutionType,
+          requirements: formData.orderQuantity,
+          message: formData.message || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Request submitted successfully! We'll get back to you within 24 hours.")
+        // Reset form
+        setFormData({
+          companyName: "",
+          contactPerson: "",
+          email: "",
+          phone: "",
+          solutionType: "",
+          orderQuantity: "",
+          message: ""
+        })
+      } else {
+        toast.error(data.error || "Failed to submit request. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error submitting corporate enquiry:", error)
+      toast.error("Failed to submit request. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -1109,16 +1189,21 @@ export default function B2BSolutionsPage() {
               transition={{ delay: 0.2 }}
             >
               <Card className="p-8 bg-white/5 border-white/10 backdrop-blur-sm rounded-3xl shadow-3d">
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold mb-2" style={{ fontFamily: "var(--font-accent)" }}>
                         Company Name *
                       </label>
                       <Input 
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
                         placeholder="Your company name"
                         className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] h-12 rounded-xl"
                         style={{ fontFamily: "var(--font-body)" }}
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                     <div>
@@ -1126,9 +1211,14 @@ export default function B2BSolutionsPage() {
                         Contact Person *
                       </label>
                       <Input 
+                        name="contactPerson"
+                        value={formData.contactPerson}
+                        onChange={handleChange}
                         placeholder="Your name"
                         className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] h-12 rounded-xl"
                         style={{ fontFamily: "var(--font-body)" }}
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                   </div>
@@ -1140,9 +1230,14 @@ export default function B2BSolutionsPage() {
                       </label>
                       <Input 
                         type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
                         placeholder="email@company.com"
                         className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] h-12 rounded-xl"
                         style={{ fontFamily: "var(--font-body)" }}
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                     <div>
@@ -1151,9 +1246,14 @@ export default function B2BSolutionsPage() {
                       </label>
                       <Input 
                         type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
                         placeholder="+91 98765 43210"
                         className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] h-12 rounded-xl"
                         style={{ fontFamily: "var(--font-body)" }}
+                        disabled={isSubmitting}
+                        required
                       />
                     </div>
                   </div>
@@ -1163,8 +1263,13 @@ export default function B2BSolutionsPage() {
                       Solution Interest *
                     </label>
                     <select 
+                      name="solutionType"
+                      value={formData.solutionType}
+                      onChange={handleChange}
                       className="w-full bg-white/10 border border-white/20 text-white h-12 rounded-xl px-4 focus:border-[#F4A261] focus:outline-none focus:ring-2 focus:ring-[#F4A261]/50"
                       style={{ fontFamily: "var(--font-body)" }}
+                      disabled={isSubmitting}
+                      required
                     >
                       <option value="" className="text-[#2C2C2E]">Select a solution...</option>
                       <option value="snack-boxes" className="text-[#2C2C2E]">Food & Snack Boxes</option>
@@ -1180,9 +1285,14 @@ export default function B2BSolutionsPage() {
                       Order Quantity / Requirements *
                     </label>
                     <Input 
+                      name="orderQuantity"
+                      value={formData.orderQuantity}
+                      onChange={handleChange}
                       placeholder="e.g., 500 units monthly"
                       className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] h-12 rounded-xl"
                       style={{ fontFamily: "var(--font-body)" }}
+                      disabled={isSubmitting}
+                      required
                     />
                   </div>
                   
@@ -1191,19 +1301,25 @@ export default function B2BSolutionsPage() {
                       Message
                     </label>
                     <Textarea 
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
                       placeholder="Tell us about your requirements, timeline, and any specific customization needs..."
                       rows={5}
                       className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#F4A261] rounded-xl"
                       style={{ fontFamily: "var(--font-body)" }}
+                      disabled={isSubmitting}
                     />
                   </div>
                   
                   <Button 
+                    type="submit"
                     size="lg"
+                    disabled={isSubmitting}
                     className="w-full bg-[#F4A261] hover:bg-[#E27D60] text-[#2C2C2E] font-bold h-14 shadow-3d btn-3d rounded-xl"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
-                    Submit Request
+                    {isSubmitting ? "Submitting..." : "Submit Request"}
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                   
