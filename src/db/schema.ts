@@ -145,7 +145,7 @@ export const products = sqliteTable('products', {
   slug: text('slug').notNull().unique(),
   category: text('category').notNull(),
   subCategory: text('sub_category').notNull(),
-  description: text('description'),
+  description: text('description').notNull(),
   badge: text('badge'),
   featured: integer('featured', { mode: 'boolean' }).default(false).notNull(),
   rating: real('rating').default(0).notNull(),
@@ -161,18 +161,20 @@ export const productImages = sqliteTable('product_images', {
   altText: text('alt_text'),
   displayOrder: integer('display_order').default(0).notNull(),
   isPrimary: integer('is_primary', { mode: 'boolean' }).default(false).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
 });
 
 export const productNutrition = sqliteTable('product_nutrition', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   productId: integer('product_id').notNull().unique().references(() => products.id, { onDelete: 'cascade' }),
-  servingSize: text('serving_size'),
-  calories: integer('calories'),
-  protein: real('protein'),
-  carbs: real('carbs'),
-  fat: real('fat'),
-  fiber: real('fiber'),
-  sugar: real('sugar'),
+  servingSize: text('serving_size').notNull(),
+  calories: integer('calories').notNull(),
+  protein: real('protein').notNull(),
+  carbs: real('carbs').notNull(),
+  fat: real('fat').notNull(),
+  fiber: real('fiber').notNull(),
+  sugar: real('sugar').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
 });
 
 export const productIngredients = sqliteTable('product_ingredients', {
@@ -180,6 +182,7 @@ export const productIngredients = sqliteTable('product_ingredients', {
   productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   ingredientName: text('ingredient_name').notNull(),
   displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
 });
 
 export const productHighlights = sqliteTable('product_highlights', {
@@ -187,6 +190,7 @@ export const productHighlights = sqliteTable('product_highlights', {
   productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   highlightText: text('highlight_text').notNull(),
   displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
 });
 
 // Site settings system (update existing table)

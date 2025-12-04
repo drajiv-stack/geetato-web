@@ -1,8 +1,8 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { useState } from "react"
-import { Search, Filter, ChevronDown, X, Heart, Leaf, Wheat, ChefHat, Snowflake, Package, Grid3x3, List, SlidersHorizontal, ArrowUpDown, Star, MessageCircle, Eye, ExternalLink, ChevronRight } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Filter, ChevronDown, X, Heart, Leaf, Wheat, ChefHat, Snowflake, Package, Grid3x3, List, SlidersHorizontal, ArrowUpDown, Star, MessageCircle, Eye, ExternalLink, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,143 +12,41 @@ import Footer from "@/components/Footer"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useSession } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import SignupDialog from "@/components/SignupDialog"
 
 // Main Categories with Icons
 const mainCategories = [
   { id: "all", name: "All Products", icon: Package, color: "#E85D75" },
-  { id: "health-bakery", name: "Health-Focused Bakery", icon: Heart, color: "#F4A261" },
-  { id: "traditional", name: "Traditional Indian", icon: ChefHat, color: "#88A85D" },
-  { id: "bakery-confectionery", name: "Bakery & Confectionery", icon: Wheat, color: "#D4A5D4" },
-  { id: "ready-to-cook", name: "Ready-to-Cook & Frozen", icon: Snowflake, color: "#89CFF0" },
-  { id: "specialty-ingredients", name: "Specialty Ingredients", icon: Leaf, color: "#A67C52" }
+  { id: "Health-Focused Bakery", name: "Health-Focused Bakery", icon: Heart, color: "#F4A261" },
+  { id: "Ancient Grains Collection", name: "Ancient Grains Collection", icon: Leaf, color: "#88A85D" },
+  { id: "Vegan Options", name: "Vegan Options", icon: ChefHat, color: "#D4A5D4" },
+  { id: "Kids' Healthy Treats", name: "Kids' Healthy Treats", icon: Snowflake, color: "#89CFF0" }
 ]
 
-// Sub-categories for each main category
-const subCategories = {
-  "health-bakery": [
-    "Sugar-Free Treats",
-    "High-Fiber Options",
-    "Diabetic-Friendly Range",
-    "Gluten-Free Selection"
-  ],
-  "traditional": [
-    "Mathri & Khakhra",
-    "Baked Namkeens",
-    "Crackers & Chips",
-    "Regional Specialties",
-    "Festival Specials"
-  ],
-  "bakery-confectionery": [
-    "Artisan Breads",
-    "Fresh Cakes & Bakes",
-    "Cookies & Rusks",
-    "Snacks & Bites"
-  ],
-  "ready-to-cook": [
-    "Parathas & Rotis",
-    "Ready-to-Fry Items",
-    "Meal Components",
-    "Frozen Desserts"
-  ],
-  "specialty-ingredients": [
-    "Flour Blends",
-    "Spice Mixes",
-    "Health Additives",
-    "Recipe Bases"
-  ]
+// Type definitions
+interface Product {
+  id: number
+  name: string
+  slug: string
+  category: string
+  subCategory: string
+  description: string
+  badge: string | null
+  featured: boolean
+  rating: number
+  reviews: number
+  images?: Array<{
+    id: number
+    productId: number
+    imageUrl: string
+    altText: string | null
+    displayOrder: number
+    isPrimary: boolean
+  }>
 }
-
-// Comprehensive Product Data with ratings (prices removed)
-const allProducts = [
-  // Health-Focused Bakery
-  { id: 1, name: "Stevia Cookie Pack", category: "health-bakery", subCategory: "Sugar-Free Treats", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-sugar-f-a067a36f-20251104162057.jpg", badge: "Sugar-Free", featured: true, rating: 4.8, reviews: 234 },
-  { id: 2, name: "Jaggery Energy Bites", category: "health-bakery", subCategory: "Sugar-Free Treats", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-jaggery-3349bbdc-20251104162056.jpg", badge: "Natural", rating: 4.6, reviews: 189 },
-  { id: 3, name: "Sugar-Free Brownies", category: "health-bakery", subCategory: "Sugar-Free Treats", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-sugar-f-003ad916-20251104162056.jpg", badge: "Best Seller", rating: 4.9, reviews: 567 },
-  
-  { id: 4, name: "Oat & Millet Cookies", category: "health-bakery", subCategory: "High-Fiber Options", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-oat-and-b38ff104-20251104162058.jpg", badge: "High Fiber", rating: 4.7, reviews: 342 },
-  { id: 5, name: "Flax Seed Crackers", category: "health-bakery", subCategory: "High-Fiber Options", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-flax-se-76663e90-20251104162137.jpg", badge: "Fiber Rich", featured: true, rating: 4.5, reviews: 278 },
-  { id: 6, name: "Baked Khakhra Variety", category: "health-bakery", subCategory: "High-Fiber Options", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-baked-k-fd4f3e33-20251104162137.jpg", badge: "Traditional", rating: 4.4, reviews: 198 },
-  
-  { id: 7, name: "Savory Snack Box", category: "health-bakery", subCategory: "Diabetic-Friendly Range", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-savory--859cce21-20251104162133.jpg", badge: "Low GI", rating: 4.6, reviews: 156 },
-  { id: 8, name: "Multi-Grain Crackers", category: "health-bakery", subCategory: "Diabetic-Friendly Range", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-multi-g-5403314d-20251104162135.jpg", badge: "Diabetic-Safe", rating: 4.7, reviews: 223 },
-  
-  { id: 9, name: "Millet Flour Cookies", category: "health-bakery", subCategory: "Gluten-Free Selection", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-millet--fc2f1bd9-20251104162138.jpg", badge: "Gluten-Free", featured: true, rating: 4.8, reviews: 445 },
-  { id: 10, name: "Almond Protein Bars", category: "health-bakery", subCategory: "Gluten-Free Selection", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-almond--93bc9869-20251104162136.jpg", badge: "High Protein", rating: 4.9, reviews: 612 },
-  { id: 11, name: "Makhana Puffs", category: "health-bakery", subCategory: "Gluten-Free Selection", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-makhana-b625fe4d-20251104162140.jpg", badge: "Light", rating: 4.5, reviews: 289 },
-
-  // Traditional Indian Specialties
-  { id: 12, name: "Jeera Mathri Pack", category: "traditional", subCategory: "Mathri & Khakhra", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-jeera-m-ed70f869-20251104162138.jpg", badge: "Classic", featured: true, rating: 4.7, reviews: 534 },
-  { id: 13, name: "Masala Khakhra Assorted", category: "traditional", subCategory: "Mathri & Khakhra", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-masala--1d4b4d51-20251104162138.jpg", badge: "Bestseller", rating: 4.8, reviews: 678 },
-  { id: 14, name: "Methi Mathri", category: "traditional", subCategory: "Mathri & Khakhra", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-methi-m-edfe3221-20251104162139.jpg", badge: "Traditional", rating: 4.6, reviews: 412 },
-  
-  { id: 15, name: "Roasted Chivda Mix", category: "traditional", subCategory: "Baked Namkeens", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-roasted-ae1505d4-20251104162212.jpg", badge: "Crunchy", rating: 4.7, reviews: 389 },
-  { id: 16, name: "Spiced Sev Variety", category: "traditional", subCategory: "Baked Namkeens", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-spiced--f918a76c-20251104162214.jpg", badge: "Spicy", featured: true, rating: 4.8, reviews: 523 },
-  { id: 17, name: "Puffed Snack Mix", category: "traditional", subCategory: "Baked Namkeens", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-puffed--109a95b0-20251104162213.jpg", badge: "Light", rating: 4.5, reviews: 267 },
-  
-  { id: 18, name: "Baked Potato Wafers", category: "traditional", subCategory: "Crackers & Chips", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-baked-p-b8631609-20251104162214.jpg", badge: "Popular", rating: 4.6, reviews: 734 },
-  { id: 19, name: "Multigrain Crisps", category: "traditional", subCategory: "Crackers & Chips", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-multigr-40dd8f81-20251104162212.jpg", badge: "Healthy", rating: 4.7, reviews: 456 },
-  { id: 20, name: "Masala Makhana Chips", category: "traditional", subCategory: "Crackers & Chips", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-masala--c66e9354-20251104162214.jpg", badge: "Premium", featured: true, rating: 4.9, reviews: 891 },
-  
-  { id: 21, name: "Rajasthani Snack Box", category: "traditional", subCategory: "Regional Specialties", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-rajasth-58552c41-20251104162213.jpg", badge: "Regional", rating: 4.8, reviews: 345 },
-  { id: 22, name: "South Indian Murukku", category: "traditional", subCategory: "Regional Specialties", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-south-i-29bfde96-20251104162212.jpg", badge: "Authentic", rating: 4.7, reviews: 467 },
-  { id: 23, name: "Punjabi Mix", category: "traditional", subCategory: "Regional Specialties", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-punjabi-ab783775-20251104162213.jpg", badge: "Spicy", rating: 4.6, reviews: 398 },
-  
-  { id: 24, name: "Diwali Special Box", category: "traditional", subCategory: "Festival Specials", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-diwali--76e4747d-20251104162217.jpg", badge: "Festival", featured: true, rating: 4.9, reviews: 1023 },
-  { id: 25, name: "Holi Gujiya Pack", category: "traditional", subCategory: "Festival Specials", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-holi-gu-3ae51d0f-20251104162255.jpg", badge: "Seasonal", rating: 4.8, reviews: 678 },
-  { id: 26, name: "Festive Combo Pack", category: "traditional", subCategory: "Festival Specials", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-festive-78f96100-20251104162251.jpg", badge: "Gift Box", rating: 4.9, reviews: 834 },
-
-  // Bakery & Confectionery
-  { id: 27, name: "Multigrain Bread", category: "bakery-confectionery", subCategory: "Artisan Breads", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-multigr-64f36c2b-20251104162252.jpg", badge: "Fresh Daily", rating: 4.5, reviews: 234 },
-  { id: 28, name: "Garlic Focaccia", category: "bakery-confectionery", subCategory: "Artisan Breads", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-garlic--735ae2cd-20251104162250.jpg", badge: "Artisan", featured: true, rating: 4.8, reviews: 456 },
-  { id: 29, name: "Pav Buns (6 pack)", category: "bakery-confectionery", subCategory: "Artisan Breads", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-pav-bun-28fc98ec-20251104162252.jpg", badge: "Best Seller", rating: 4.7, reviews: 789 },
-  
-  { id: 30, name: "Whole Wheat Cake", category: "bakery-confectionery", subCategory: "Fresh Cakes & Bakes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-whole-w-f20933b2-20251104162252.jpg", badge: "Eggless", rating: 4.4, reviews: 321 },
-  { id: 31, name: "Chocolate Cupcakes", category: "bakery-confectionery", subCategory: "Fresh Cakes & Bakes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-chocola-e69664c4-20251104162252.jpg", badge: "Popular", featured: true, rating: 4.7, reviews: 543 },
-  { id: 32, name: "Vanilla Sponge Cake", category: "bakery-confectionery", subCategory: "Fresh Cakes & Bakes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-vanilla-12240f8e-20251104162252.jpg", badge: "Premium", rating: 4.6, reviews: 412 },
-  
-  { id: 33, name: "Coconut Cookies", category: "bakery-confectionery", subCategory: "Cookies & Rusks", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-coconut-e8d882e6-20251104162251.jpg", badge: "Classic", rating: 4.3, reviews: 289 },
-  { id: 34, name: "Butter Cookies", category: "bakery-confectionery", subCategory: "Cookies & Rusks", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-butter--f2cd4854-20251104162254.jpg", badge: "Best Seller", rating: 4.5, reviews: 456 },
-  { id: 35, name: "Atta Rusks", category: "bakery-confectionery", subCategory: "Cookies & Rusks", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-atta-ru-b990a4f4-20251104162328.jpg", badge: "Traditional", featured: true, rating: 4.4, reviews: 345 },
-  { id: 36, name: "Millet Cookies", category: "bakery-confectionery", subCategory: "Cookies & Rusks", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-millet--d8d50686-20251104162328.jpg", badge: "Healthy", rating: 4.2, reviews: 298 },
-  
-  { id: 37, name: "Blueberry Muffins", category: "bakery-confectionery", subCategory: "Snacks & Bites", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-blueber-9c5a9da3-20251104162329.jpg", badge: "Fresh", rating: 4.4, reviews: 312 },
-  { id: 38, name: "Mini Tarts Assorted", category: "bakery-confectionery", subCategory: "Snacks & Bites", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-mini-ta-a6785e3b-20251104162329.jpg", badge: "Sweet", rating: 4.3, reviews: 278 },
-  { id: 39, name: "Baked Samosas", category: "bakery-confectionery", subCategory: "Snacks & Bites", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-baked-s-8f7e0e89-20251104162330.jpg", badge: "Savory", featured: true, rating: 4.5, reviews: 367 },
-
-  // Ready-to-Cook & Frozen
-  { id: 40, name: "Aloo Paratha (5 pack)", category: "ready-to-cook", subCategory: "Parathas & Rotis", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-aloo-pa-1788c2df-20251104162330.jpg", badge: "Frozen", featured: true, rating: 4.6, reviews: 456 },
-  { id: 41, name: "Plain Roti (10 pack)", category: "ready-to-cook", subCategory: "Parathas & Rotis", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-plain-r-4bfb729d-20251104162328.jpg", badge: "Convenient", rating: 4.4, reviews: 321 },
-  { id: 42, name: "Paneer Paratha (5 pack)", category: "ready-to-cook", subCategory: "Parathas & Rotis", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-paneer--850e5a77-20251104162331.jpg", badge: "Premium", rating: 4.5, reviews: 412 },
-  
-  { id: 43, name: "Veg Cutlets (6 pack)", category: "ready-to-cook", subCategory: "Ready-to-Fry Items", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-veg-cut-61a28110-20251104162328.jpg", badge: "Quick Fry", rating: 4.3, reviews: 289 },
-  { id: 44, name: "Frozen Samosas (10 pack)", category: "ready-to-cook", subCategory: "Ready-to-Fry Items", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-frozen--3b69c25e-20251104162327.jpg", badge: "Party Pack", featured: true, rating: 4.7, reviews: 543 },
-  { id: 45, name: "Kachori Mix (8 pack)", category: "ready-to-cook", subCategory: "Ready-to-Fry Items", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-kachori-9c1e36b0-20251104162404.jpg", badge: "Traditional", rating: 4.4, reviews: 312 },
-  
-  { id: 46, name: "Chapati Dough (500g)", category: "ready-to-cook", subCategory: "Meal Components", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-chapati-678b7e4e-20251104162407.jpg", badge: "Fresh", rating: 4.2, reviews: 278 },
-  { id: 47, name: "Curry Base Mix", category: "ready-to-cook", subCategory: "Meal Components", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-curry-b-f24e0de1-20251104162406.jpg", badge: "Easy Meal", rating: 4.3, reviews: 345 },
-  { id: 48, name: "Gravy Cubes", category: "ready-to-cook", subCategory: "Meal Components", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-gravy-c-4db7026c-20251104162404.jpg", badge: "Instant", rating: 4.1, reviews: 267 },
-  
-  { id: 49, name: "Baked Halwa Cups", category: "ready-to-cook", subCategory: "Frozen Desserts", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-baked-h-0d4b6280-20251104162400.jpg", badge: "Sweet", featured: true, rating: 4.5, reviews: 412 },
-  { id: 50, name: "Frozen Rasmalai", category: "ready-to-cook", subCategory: "Frozen Desserts", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-frozen--07b513af-20251104162402.jpg", badge: "Premium", rating: 4.6, reviews: 389 },
-  { id: 51, name: "Gulab Jamun Bites", category: "ready-to-cook", subCategory: "Frozen Desserts", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-gulab-j-a57211e2-20251104162406.jpg", badge: "Classic", rating: 4.4, reviews: 321 },
-
-  // Specialty Ingredients
-  { id: 52, name: "Millet Flour Mix (1kg)", category: "specialty-ingredients", subCategory: "Flour Blends", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-millet--fef504aa-20251104162404.jpg", badge: "Organic", featured: true, rating: 4.7, reviews: 456 },
-  { id: 53, name: "Almond Flour (500g)", category: "specialty-ingredients", subCategory: "Flour Blends", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-almond--c07c1453-20251104162404.jpg", badge: "Premium", rating: 4.8, reviews: 543 },
-  { id: 54, name: "Multigrain Flour (1kg)", category: "specialty-ingredients", subCategory: "Flour Blends", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-multigr-e5fa00ac-20251104162405.jpg", badge: "Healthy", rating: 4.5, reviews: 321 },
-  
-  { id: 55, name: "Garam Masala Blend", category: "specialty-ingredients", subCategory: "Spice Mixes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-garam-m-63425228-20251104162435.jpg", badge: "Authentic", rating: 4.6, reviews: 412 },
-  { id: 56, name: "Chaat Masala", category: "specialty-ingredients", subCategory: "Spice Mixes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-chaat-m-55ce6e57-20251104162437.jpg", badge: "Tangy", rating: 4.4, reviews: 345 },
-  { id: 57, name: "Bakery Spice Mix", category: "specialty-ingredients", subCategory: "Spice Mixes", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-bakery--46b5460f-20251104162436.jpg", badge: "Special", featured: true, rating: 4.7, reviews: 456 },
-  
-  { id: 58, name: "Chia Seeds (250g)", category: "specialty-ingredients", subCategory: "Health Additives", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-chia-se-2a69d4f8-20251104162436.jpg", badge: "Superfood", rating: 4.8, reviews: 543 },
-  { id: 59, name: "Mixed Dried Fruits", category: "specialty-ingredients", subCategory: "Health Additives", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-mixed-d-fb6a3e99-20251104162437.jpg", badge: "Premium", rating: 4.6, reviews: 412 },
-  { id: 60, name: "Plant Protein Powder", category: "specialty-ingredients", subCategory: "Health Additives", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-plant-p-d2466caa-20251104162436.jpg", badge: "Fitness", featured: true, rating: 4.9, reviews: 678 },
-  
-  { id: 61, name: "Cookie Baking Mix", category: "specialty-ingredients", subCategory: "Recipe Bases", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-cookie--98709433-20251104162437.jpg", badge: "Easy Bake", rating: 4.5, reviews: 321 },
-  { id: 62, name: "Brownie Premix", category: "specialty-ingredients", subCategory: "Recipe Bases", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-brownie-07edeb04-20251104162436.jpg", badge: "Quick", rating: 4.4, reviews: 289 },
-  { id: 63, name: "Dough Starter Kit", category: "specialty-ingredients", subCategory: "Recipe Bases", image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-dough-s-6f8932d6-20251104162436.jpg", badge: "Starter", rating: 4.3, reviews: 278 }
-]
 
 type SortOption = "featured" | "rating" | "newest"
 type ViewMode = "grid" | "list"
@@ -162,8 +60,74 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState<SortOption>("featured")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [showSortMenu, setShowSortMenu] = useState(false)
-  const [quickViewProduct, setQuickViewProduct] = useState<typeof allProducts[0] | null>(null)
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [expandedCategory, setExpandedCategory] = useState<string | null>("all")
+  const [showSignupDialog, setShowSignupDialog] = useState(false)
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null)
+  const [isAddingToWishlist, setIsAddingToWishlist] = useState<number | null>(null)
+  
+  // Database state
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
+  const [subCategories, setSubCategories] = useState<Record<string, string[]>>({})
+  
+  const { data: session, isPending } = useSession()
+  const router = useRouter()
+
+  // Fetch products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true)
+      try {
+        const res = await fetch("/api/products-new")
+        if (res.ok) {
+          const products = await res.json()
+          
+          // Fetch images for each product
+          const productsWithImages = await Promise.all(
+            products.map(async (product: Product) => {
+              try {
+                const imgRes = await fetch(`/api/product-images?productId=${product.id}`)
+                if (imgRes.ok) {
+                  const images = await imgRes.json()
+                  return { ...product, images }
+                }
+              } catch (err) {
+                console.error(`Error fetching images for product ${product.id}:`, err)
+              }
+              return product
+            })
+          )
+          
+          setAllProducts(productsWithImages)
+          
+          // Build subcategories dynamically
+          const subCats: Record<string, Set<string>> = {}
+          productsWithImages.forEach((p: Product) => {
+            if (!subCats[p.category]) {
+              subCats[p.category] = new Set()
+            }
+            subCats[p.category].add(p.subCategory)
+          })
+          
+          const subCatsObj: Record<string, string[]> = {}
+          Object.entries(subCats).forEach(([cat, subs]) => {
+            subCatsObj[cat] = Array.from(subs).sort()
+          })
+          setSubCategories(subCatsObj)
+        } else {
+          toast.error("Failed to load products")
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+        toast.error("Failed to load products")
+      } finally {
+        setIsLoadingProducts(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   let filteredProducts = allProducts.filter(product => {
     const matchesMainCategory = selectedMainCategory === "all" || product.category === selectedMainCategory
@@ -187,18 +151,63 @@ export default function ProductsPage() {
     }
   })
 
-  const activeCategory = mainCategories.find(cat => cat.id === selectedMainCategory)
-  const availableSubCategories = selectedMainCategory !== "all" ? subCategories[selectedMainCategory as keyof typeof subCategories] : []
-
   const sortOptions = [
     { value: "featured" as SortOption, label: "Featured" },
     { value: "rating" as SortOption, label: "Highest Rated" },
     { value: "newest" as SortOption, label: "Newest First" }
   ]
 
-  const handleExpressInterest = (product: typeof allProducts[0]) => {
-    console.log(`Expressed interest in ${product.name}`)
-    setQuickViewProduct(null)
+  const handleExpressInterest = async (product: Product) => {
+    // Check if user is logged in
+    if (!session?.user) {
+      setPendingProduct(product)
+      setShowSignupDialog(true)
+      return
+    }
+
+    // User is logged in, add to wishlist
+    setIsAddingToWishlist(product.id)
+    try {
+      const token = localStorage.getItem("bearer_token")
+      const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0]
+      
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          productName: product.name,
+          productImage: primaryImage?.imageUrl || "",
+        }),
+      })
+
+      if (res.ok) {
+        toast.success(`${product.name} added to your wishlist!`)
+      } else {
+        const error = await res.json()
+        if (error.code === "ALREADY_EXISTS") {
+          toast.info("This product is already in your wishlist")
+        } else {
+          toast.error("Failed to add to wishlist")
+        }
+      }
+    } catch (error) {
+      console.error("Error adding to wishlist:", error)
+      toast.error("Failed to add to wishlist")
+    } finally {
+      setIsAddingToWishlist(null)
+    }
+  }
+
+  const handleSignupSuccess = async () => {
+    // After signup, add the pending product to wishlist
+    if (pendingProduct) {
+      await handleExpressInterest(pendingProduct)
+      setPendingProduct(null)
+    }
   }
 
   const handleCategoryClick = (categoryId: string) => {
@@ -220,6 +229,11 @@ export default function ProductsPage() {
     setShowFeaturedOnly(false)
     setSortBy("featured")
     setExpandedCategory("all")
+  }
+
+  const getPrimaryImage = (product: Product) => {
+    const primaryImg = product.images?.find(img => img.isPrimary)
+    return primaryImg?.imageUrl || product.images?.[0]?.imageUrl || ""
   }
 
   // Sidebar Filter Component
@@ -312,7 +326,7 @@ export default function ProductsPage() {
                     <category.icon className="w-4 h-4" />
                     <span>{category.name}</span>
                   </div>
-                  {category.id !== "all" && subCategories[category.id as keyof typeof subCategories] && (
+                  {category.id !== "all" && subCategories[category.id] && (
                     <ChevronRight
                       className={`w-4 h-4 transition-transform ${
                         expandedCategory === category.id ? "rotate-90" : ""
@@ -323,7 +337,7 @@ export default function ProductsPage() {
 
                 {/* Sub-categories */}
                 <AnimatePresence>
-                  {selectedMainCategory === category.id && category.id !== "all" && (
+                  {selectedMainCategory === category.id && category.id !== "all" && subCategories[category.id] && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
@@ -341,7 +355,7 @@ export default function ProductsPage() {
                       >
                         All {category.name}
                       </button>
-                      {subCategories[category.id as keyof typeof subCategories]?.map((subCat) => (
+                      {subCategories[category.id]?.map((subCat) => (
                         <button
                           key={subCat}
                           onClick={() => handleSubCategoryClick(subCat)}
@@ -432,7 +446,7 @@ export default function ProductsPage() {
               style={{ fontFamily: "var(--font-accent)" }}
             >
               <Package className="w-4 h-4" />
-              {filteredProducts.length}+ Premium Products
+              {isLoadingProducts ? "Loading..." : `${filteredProducts.length}+ Premium Products`}
             </motion.div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-4 text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
@@ -606,263 +620,292 @@ export default function ProductsPage() {
               </div>
               
               {/* Products Grid/List */}
-              <AnimatePresence mode="wait">
-                {filteredProducts.length > 0 ? (
-                  <motion.div
-                    key={`${selectedMainCategory}-${selectedSubCategory}-${viewMode}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className={viewMode === "grid" 
-                      ? "grid sm:grid-cols-2 xl:grid-cols-3 gap-6 perspective-container"
-                      : "space-y-6"
-                    }
-                  >
-                    {filteredProducts.map((product, idx) => (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.03 }}
-                        layout
-                      >
-                        {viewMode === "grid" ? (
-                          /* Grid View with inline buttons */
-                          <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d h-full bg-white rounded-3xl card-3d">
-                            <div className="relative h-64 overflow-hidden">
-                              <Link href={`/products/${product.id}`} className="cursor-pointer">
-                                <motion.img
-                                  whileHover={{ scale: 1.15, rotateZ: 2 }}
-                                  transition={{ duration: 0.5 }}
-                                  src={product.image}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover"
-                                  style={{ transformStyle: "preserve-3d" }}
-                                />
-                              </Link>
-                              <motion.div 
-                                className="absolute top-4 right-4"
-                                whileHover={{ scale: 1.1, rotate: 5 }}
-                              >
-                                <Badge className="bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
-                                  {product.badge}
-                                </Badge>
-                              </motion.div>
-                              {product.featured && (
-                                <motion.div
-                                  className="absolute top-4 left-4"
-                                  whileHover={{ scale: 1.1, rotate: -5 }}
-                                >
-                                  <Badge className="bg-[#E85D75] text-white font-bold border-0 shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
-                                    Featured
-                                  </Badge>
-                                </motion.div>
-                              )}
-                            </div>
-                            
-                            <div className="p-6">
-                              <p className="text-xs text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
-                                {product.subCategory}
-                              </p>
-                              <Link href={`/products/${product.id}`} className="cursor-pointer">
-                                <h3 className="text-lg font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E] line-clamp-2" style={{ fontFamily: "var(--font-heading)" }}>
-                                  {product.name}
-                                </h3>
-                              </Link>
-                              
-                              {/* Rating */}
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="flex gap-0.5">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-3 h-3 ${
-                                        i < Math.floor(product.rating)
-                                          ? "fill-[#F4A261] text-[#F4A261]"
-                                          : "text-[#E8E5E1]"
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-xs text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
-                                  {product.rating} ({product.reviews})
-                                </span>
-                              </div>
-                              
-                              {/* Action Buttons Row - All Inline */}
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    handleExpressInterest(product)
-                                  }}
-                                  className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
-                                  style={{ fontFamily: "var(--font-accent)" }}
-                                >
-                                  <Heart className="w-4 h-4 mr-2" />
-                                  Interested
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    setQuickViewProduct(product)
-                                  }}
-                                  className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
-                                  style={{ fontFamily: "var(--font-accent)" }}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  asChild
-                                  className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
-                                  style={{ fontFamily: "var(--font-accent)" }}
-                                >
-                                  <Link href={`/products/${product.id}`}>
-                                    <ExternalLink className="w-4 h-4" />
-                                  </Link>
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                        ) : (
-                          /* List View with Quick View & View Details */
-                          <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d bg-white rounded-3xl card-3d">
-                            <div className="flex flex-col sm:flex-row gap-6 p-6">
-                              <div className="relative w-full sm:w-48 h-48 flex-shrink-0 overflow-hidden rounded-2xl">
-                                <Link href={`/products/${product.id}`} className="cursor-pointer">
-                                  <motion.img
-                                    whileHover={{ scale: 1.1 }}
-                                    transition={{ duration: 0.5 }}
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </Link>
-                                <motion.div 
-                                  className="absolute top-3 right-3"
-                                  whileHover={{ scale: 1.1, rotate: 5 }}
-                                >
-                                  <Badge className="bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d text-xs" style={{ fontFamily: "var(--font-accent)" }}>
-                                    {product.badge}
-                                  </Badge>
-                                </motion.div>
-                                {product.featured && (
-                                  <motion.div
-                                    className="absolute top-3 left-3"
-                                    whileHover={{ scale: 1.1, rotate: -5 }}
-                                  >
-                                    <Badge className="bg-[#E85D75] text-white font-bold border-0 shadow-3d text-xs" style={{ fontFamily: "var(--font-accent)" }}>
-                                      Featured
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                              </div>
-                              
-                              <div className="flex-1 flex flex-col">
-                                <p className="text-xs text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
-                                  {product.subCategory}
-                                </p>
-                                <Link href={`/products/${product.id}`} className="cursor-pointer">
-                                  <h3 className="text-xl font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
-                                    {product.name}
-                                  </h3>
-                                </Link>
-                                
-                                {/* Rating */}
-                                <div className="flex items-center gap-2 mb-4">
-                                  <div className="flex gap-0.5">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        className={`w-4 h-4 ${
-                                          i < Math.floor(product.rating)
-                                            ? "fill-[#F4A261] text-[#F4A261]"
-                                            : "text-[#E8E5E1]"
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
-                                    {product.rating} ({product.reviews} reviews)
-                                  </span>
-                                </div>
-                                
-                                <div className="mt-auto flex flex-wrap gap-2">
-                                  <Button 
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      handleExpressInterest(product)
-                                    }}
-                                    className="flex-1 min-w-[140px] bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
-                                    style={{ fontFamily: "var(--font-accent)" }}
-                                  >
-                                    <Heart className="w-4 h-4 mr-2" />
-                                    I'm Interested
-                                  </Button>
-                                  <Button 
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      setQuickViewProduct(product)
-                                    }}
-                                    variant="outline"
-                                    className="border-2 border-[#F4A261] text-[#F4A261] hover:bg-[#F4A261] hover:text-white rounded-full cursor-pointer"
-                                    style={{ fontFamily: "var(--font-accent)" }}
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Quick View
-                                  </Button>
-                                  <Button 
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-2 border-[#E85D75] text-[#E85D75] hover:bg-[#E85D75] hover:text-white rounded-full cursor-pointer"
-                                    style={{ fontFamily: "var(--font-accent)" }}
-                                    asChild
-                                  >
-                                    <Link href={`/products/${product.id}`}>
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      View Details
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </Card>
-                        )}
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-20"
-                  >
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#E85D75]/10 mb-6">
-                      <Search className="w-10 h-10 text-[#E85D75]" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-[#2C2C2E] mb-3" style={{ fontFamily: "var(--font-heading)" }}>
-                      No products found
-                    </h3>
-                    <p className="text-lg text-[#5D4037]/60 mb-6" style={{ fontFamily: "var(--font-body)" }}>
-                      Try adjusting your filters or search terms
+              {isLoadingProducts ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-[#E85D75] mx-auto mb-4" />
+                    <p className="text-lg text-[#5D4037]/70 font-semibold" style={{ fontFamily: "var(--font-body)" }}>
+                      Loading products...
                     </p>
-                    <Button
-                      onClick={clearAllFilters}
-                      className="bg-[#F4A261] hover:bg-[#E27D60] text-[#2C2C2E] font-bold rounded-full btn-3d cursor-pointer"
-                      style={{ fontFamily: "var(--font-accent)" }}
+                  </div>
+                </div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  {filteredProducts.length > 0 ? (
+                    <motion.div
+                      key={`${selectedMainCategory}-${selectedSubCategory}-${viewMode}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={viewMode === "grid" 
+                        ? "grid sm:grid-cols-2 xl:grid-cols-3 gap-6 perspective-container"
+                        : "space-y-6"
+                      }
                     >
-                      Clear All Filters
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                      {filteredProducts.map((product, idx) => {
+                        const primaryImage = getPrimaryImage(product)
+                        
+                        return (
+                          <motion.div
+                            key={product.id}
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.03 }}
+                            layout
+                          >
+                            {viewMode === "grid" ? (
+                              /* Grid View */
+                              <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d h-full bg-white rounded-3xl card-3d">
+                                <div className="relative h-64 overflow-hidden">
+                                  <Link href={`/products/${product.id}`} className="cursor-pointer">
+                                    <motion.img
+                                      whileHover={{ scale: 1.15, rotateZ: 2 }}
+                                      transition={{ duration: 0.5 }}
+                                      src={primaryImage}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover"
+                                      style={{ transformStyle: "preserve-3d" }}
+                                    />
+                                  </Link>
+                                  {product.badge && (
+                                    <motion.div 
+                                      className="absolute top-4 right-4"
+                                      whileHover={{ scale: 1.1, rotate: 5 }}
+                                    >
+                                      <Badge className="bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
+                                        {product.badge}
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                  {product.featured && (
+                                    <motion.div
+                                      className="absolute top-4 left-4"
+                                      whileHover={{ scale: 1.1, rotate: -5 }}
+                                    >
+                                      <Badge className="bg-[#E85D75] text-white font-bold border-0 shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
+                                        Featured
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                </div>
+                                
+                                <div className="p-6">
+                                  <p className="text-xs text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
+                                    {product.subCategory}
+                                  </p>
+                                  <Link href={`/products/${product.id}`} className="cursor-pointer">
+                                    <h3 className="text-lg font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E] line-clamp-2" style={{ fontFamily: "var(--font-heading)" }}>
+                                      {product.name}
+                                    </h3>
+                                  </Link>
+                                  
+                                  {/* Rating */}
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="flex gap-0.5">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className={`w-3 h-3 ${
+                                            i < Math.floor(product.rating)
+                                              ? "fill-[#F4A261] text-[#F4A261]"
+                                              : "text-[#E8E5E1]"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
+                                      {product.rating} ({product.reviews})
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Action Buttons Row - All Inline */}
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        handleExpressInterest(product)
+                                      }}
+                                      disabled={isAddingToWishlist === product.id}
+                                      className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
+                                      style={{ fontFamily: "var(--font-accent)" }}
+                                    >
+                                      {isAddingToWishlist === product.id ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      ) : (
+                                        <Heart className="w-4 h-4 mr-2" />
+                                      )}
+                                      Interested
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        setQuickViewProduct(product)
+                                      }}
+                                      className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
+                                      style={{ fontFamily: "var(--font-accent)" }}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      asChild
+                                      className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
+                                      style={{ fontFamily: "var(--font-accent)" }}
+                                    >
+                                      <Link href={`/products/${product.id}`}>
+                                        <ExternalLink className="w-4 h-4" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              </Card>
+                            ) : (
+                              /* List View */
+                              <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d bg-white rounded-3xl card-3d">
+                                <div className="flex flex-col sm:flex-row gap-6 p-6">
+                                  <div className="relative w-full sm:w-48 h-48 flex-shrink-0 overflow-hidden rounded-2xl">
+                                    <Link href={`/products/${product.id}`} className="cursor-pointer">
+                                      <motion.img
+                                        whileHover={{ scale: 1.1 }}
+                                        transition={{ duration: 0.5 }}
+                                        src={primaryImage}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </Link>
+                                    {product.badge && (
+                                      <motion.div 
+                                        className="absolute top-3 right-3"
+                                        whileHover={{ scale: 1.1, rotate: 5 }}
+                                      >
+                                        <Badge className="bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d text-xs" style={{ fontFamily: "var(--font-accent)" }}>
+                                          {product.badge}
+                                        </Badge>
+                                      </motion.div>
+                                    )}
+                                    {product.featured && (
+                                      <motion.div
+                                        className="absolute top-3 left-3"
+                                        whileHover={{ scale: 1.1, rotate: -5 }}
+                                      >
+                                        <Badge className="bg-[#E85D75] text-white font-bold border-0 shadow-3d text-xs" style={{ fontFamily: "var(--font-accent)" }}>
+                                          Featured
+                                        </Badge>
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="flex-1 flex flex-col">
+                                    <p className="text-xs text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
+                                      {product.subCategory}
+                                    </p>
+                                    <Link href={`/products/${product.id}`} className="cursor-pointer">
+                                      <h3 className="text-xl font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
+                                        {product.name}
+                                      </h3>
+                                    </Link>
+                                    
+                                    {/* Rating */}
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="flex gap-0.5">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star
+                                            key={i}
+                                            className={`w-4 h-4 ${
+                                              i < Math.floor(product.rating)
+                                                ? "fill-[#F4A261] text-[#F4A261]"
+                                                : "text-[#E8E5E1]"
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                      <span className="text-sm text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
+                                        {product.rating} ({product.reviews} reviews)
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="mt-auto flex flex-wrap gap-2">
+                                      <Button 
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          handleExpressInterest(product)
+                                        }}
+                                        disabled={isAddingToWishlist === product.id}
+                                        className="flex-1 min-w-[140px] bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
+                                        style={{ fontFamily: "var(--font-accent)" }}
+                                      >
+                                        {isAddingToWishlist === product.id ? (
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Heart className="w-4 h-4 mr-2" />
+                                        )}
+                                        I'm Interested
+                                      </Button>
+                                      <Button 
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          setQuickViewProduct(product)
+                                        }}
+                                        variant="outline"
+                                        className="border-2 border-[#F4A261] text-[#F4A261] hover:bg-[#F4A261] hover:text-white rounded-full cursor-pointer"
+                                        style={{ fontFamily: "var(--font-accent)" }}
+                                      >
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Quick View
+                                      </Button>
+                                      <Button 
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-2 border-[#E85D75] text-[#E85D75] hover:bg-[#E85D75] hover:text-white rounded-full cursor-pointer"
+                                        style={{ fontFamily: "var(--font-accent)" }}
+                                        asChild
+                                      >
+                                        <Link href={`/products/${product.id}`}>
+                                          <ExternalLink className="w-4 h-4 mr-2" />
+                                          View Details
+                                        </Link>
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            )}
+                          </motion.div>
+                        )
+                      })}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center py-20"
+                    >
+                      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#E85D75]/10 mb-6">
+                        <Search className="w-10 h-10 text-[#E85D75]" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-[#2C2C2E] mb-3" style={{ fontFamily: "var(--font-heading)" }}>
+                        No products found
+                      </h3>
+                      <p className="text-lg text-[#5D4037]/60 mb-6" style={{ fontFamily: "var(--font-body)" }}>
+                        Try adjusting your filters or search terms
+                      </p>
+                      <Button
+                        onClick={clearAllFilters}
+                        className="bg-[#F4A261] hover:bg-[#E27D60] text-[#2C2C2E] font-bold rounded-full btn-3d cursor-pointer"
+                        style={{ fontFamily: "var(--font-accent)" }}
+                      >
+                        Clear All Filters
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
             </div>
           </div>
         </div>
@@ -883,13 +926,15 @@ export default function ProductsPage() {
                 {/* Product Image */}
                 <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#FAF0E6] border-2 border-[#E85D75]/10">
                   <img
-                    src={quickViewProduct.image}
+                    src={getPrimaryImage(quickViewProduct)}
                     alt={quickViewProduct.name}
                     className="w-full h-full object-cover"
                   />
-                  <Badge className="absolute top-4 right-4 bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d">
-                    {quickViewProduct.badge}
-                  </Badge>
+                  {quickViewProduct.badge && (
+                    <Badge className="absolute top-4 right-4 bg-[#F4A261] text-[#2C2C2E] font-bold border-0 shadow-3d">
+                      {quickViewProduct.badge}
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Product Info */}
@@ -919,7 +964,7 @@ export default function ProductsPage() {
 
                   <div className="flex-1">
                     <p className="text-[#5D4037]/80 leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)" }}>
-                      Discover the authentic taste and health benefits of our carefully crafted {quickViewProduct.name}. Made with premium ingredients and traditional recipes.
+                      {quickViewProduct.description}
                     </p>
 
                     <div className="bg-[#FAF0E6] rounded-2xl p-4 mb-6">
@@ -936,11 +981,19 @@ export default function ProductsPage() {
                   <div className="flex gap-3 mt-auto">
                     <Button
                       size="lg"
-                      onClick={() => handleExpressInterest(quickViewProduct)}
+                      onClick={() => {
+                        handleExpressInterest(quickViewProduct)
+                        setQuickViewProduct(null)
+                      }}
+                      disabled={isAddingToWishlist === quickViewProduct.id}
                       className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
                       style={{ fontFamily: "var(--font-accent)" }}
                     >
-                      <Heart className="w-5 h-5 mr-2" />
+                      {isAddingToWishlist === quickViewProduct.id ? (
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      ) : (
+                        <Heart className="w-5 h-5 mr-2" />
+                      )}
                       I'm Interested
                     </Button>
                     <Button
@@ -962,6 +1015,14 @@ export default function ProductsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Signup Dialog */}
+      <SignupDialog
+        open={showSignupDialog}
+        onOpenChange={setShowSignupDialog}
+        onSuccess={handleSignupSuccess}
+        productName={pendingProduct?.name}
+      />
 
       <Footer />
     </div>
