@@ -7,85 +7,10 @@ import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-const products = [
-{
-  id: 1,
-  name: "Stevia Cookie Pack",
-  category: "Sugar-Free",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-sugar-f-a067a36f-20251104162057.jpg",
-  badge: "Sugar-Free",
-  healthGoal: "low-sugar",
-  rating: 4.8,
-  reviews: 234,
-  description: "Delicious sugar-free cookies sweetened with stevia. Perfect for health-conscious snackers who don't want to compromise on taste.",
-  nutrition: { protein: "6g", carbs: "22g", fat: "7g", calories: "180" }
-},
-{
-  id: 2,
-  name: "Jaggery Energy Bites",
-  category: "Natural Energy",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-jaggery-3349bbdc-20251104162056.jpg",
-  badge: "Natural",
-  healthGoal: "protein-rich",
-  rating: 4.6,
-  reviews: 189,
-  description: "Power-packed energy bites made with jaggery and nuts. A natural source of energy that's both delicious and nutritious.",
-  nutrition: { protein: "5g", carbs: "25g", fat: "8g", calories: "190" }
-},
-{
-  id: 3,
-  name: "Sugar-Free Brownies",
-  category: "Low Sugar",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-sugar-f-003ad916-20251104162056.jpg",
-  badge: "Best Seller",
-  healthGoal: "low-sugar",
-  rating: 4.9,
-  reviews: 567,
-  description: "Rich, fudgy brownies without the guilt. Made with cocoa and natural sweeteners for a decadent treat.",
-  nutrition: { protein: "8g", carbs: "28g", fat: "9g", calories: "210" }
-},
-{
-  id: 4,
-  name: "Oat & Millet Cookies",
-  category: "High Fiber",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-oat-and-b38ff104-20251104162058.jpg",
-  badge: "High Fiber",
-  healthGoal: "gluten-free",
-  rating: 4.7,
-  reviews: 342,
-  description: "Wholesome cookies packed with oats and millet. A crunchy, fiber-rich snack that keeps you satisfied.",
-  nutrition: { protein: "7g", carbs: "30g", fat: "6g", calories: "200" }
-},
-{
-  id: 5,
-  name: "Flax Seed Crackers",
-  category: "High Fiber",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-flax-se-76663e90-20251104162137.jpg",
-  badge: "Fiber Rich",
-  healthGoal: "vegan",
-  rating: 4.5,
-  reviews: 278,
-  description: "Crispy crackers loaded with flax seeds. Rich in omega-3 and perfect for healthy snacking.",
-  nutrition: { protein: "6g", carbs: "18g", fat: "7g", calories: "150" }
-},
-{
-  id: 6,
-  name: "Oat Protein Bites",
-  category: "High Protein",
-  image: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/9d2d2ddf-ef37-4248-823b-3b54ced81af7/generated_images/professional-food-photography-of-oat-pro-4f3ce1bc-20251104162056.jpg",
-  badge: "New",
-  healthGoal: "protein-rich",
-  rating: 5.0,
-  reviews: 234,
-  description: "Protein-rich oat bites perfect for post-workout recovery.",
-  nutrition: { protein: "15g", carbs: "18g", fat: "7g", calories: "220" }
-}];
-
 
 const benefits = [
 {
@@ -214,10 +139,12 @@ export default function Home() {
   const heroRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [showVideo, setShowVideo] = useState(false);
-  const [quickViewProduct, setQuickViewProduct] = useState<typeof products[0] | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [pendingProduct, setPendingProduct] = useState<typeof products[0] | null>(null);
+  const [pendingProduct, setPendingProduct] = useState<any>(null);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const { scrollYProgress } = useScroll({
@@ -228,11 +155,72 @@ export default function Home() {
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/products-new');
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Fetch images and nutrition for each product
+          const productsWithImages = await Promise.all(
+            data.map(async (product: any) => {
+              const imagesRes = await fetch(`/api/product-images?productId=${product.id}`);
+              const images = imagesRes.ok ? await imagesRes.json() : [];
+              const primaryImage = images.find((img: any) => img.isPrimary) || images[0];
+              
+              // Fetch nutrition data
+              const nutritionRes = await fetch(`/api/product-nutrition?productId=${product.id}`);
+              const nutritionData = nutritionRes.ok ? await nutritionRes.json() : null;
+              
+              // Format nutrition data with units
+              const nutrition = nutritionData ? {
+                protein: `${nutritionData.protein}g`,
+                carbs: `${nutritionData.carbs}g`,
+                fat: `${nutritionData.fat}g`,
+                calories: nutritionData.calories.toString()
+              } : {
+                protein: '0g',
+                carbs: '0g',
+                fat: '0g',
+                calories: '0'
+              };
+              
+              return {
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                image: primaryImage?.imageUrl || '/placeholder-product.jpg',
+                badge: product.badge || 'New',
+                healthGoal: product.subCategory,
+                rating: product.rating || 0,
+                reviews: product.reviews || 0,
+                description: product.description,
+                nutrition
+              };
+            })
+          );
+          
+          setProducts(productsWithImages.slice(0, 6)); // Show first 6 products on homepage
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const filteredProducts = activeFilter === "all" ?
   products :
   products.filter((p) => p.healthGoal === activeFilter);
 
-  const handleExpressInterest = async (product: typeof products[0]) => {
+  const handleExpressInterest = async (product: any) => {
     // Check if user is logged in
     if (!session?.user) {
       // Show signup modal instead of immediate redirect
@@ -598,114 +586,126 @@ export default function Home() {
             </div>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 perspective-container">
-            {filteredProducts.map((product, idx) =>
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              layout>
-
-                <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d bg-white rounded-3xl card-3d">
-                  <div className="relative h-80 overflow-hidden">
-                    <div 
-                      onClick={() => setQuickViewProduct(product)}
-                      className="cursor-pointer w-full h-full"
-                    >
-                      <motion.img
-                      whileHover={{ scale: 1.15, rotateZ: 2 }}
-                      transition={{ duration: 0.5 }}
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                      style={{ transformStyle: "preserve-3d" }} />
-                    </div>
-                      <motion.div
-                      className="absolute top-4 right-4"
-                      whileHover={{ scale: 1.1, rotate: 5 }}>
-
-                        <span className="bg-[#F4A261] text-[#2C2C2E] text-xs font-bold px-3 py-1.5 rounded-full shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
-                          {product.badge}
-                        </span>
-                      </motion.div>
-                  </div>
-                  
-                  <div className="p-6">
-                    <p className="text-sm text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
-                      {product.category}
-                    </p>
-                    
-                    <Link href={`/products/${product.id}`} className="cursor-pointer">
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
-                        {product.name}
-                      </h3>
-                    </Link>
-                    
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, i) =>
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                        i < Math.floor(product.rating) ?
-                        "fill-[#F4A261] text-[#F4A261]" :
-                        "text-[#E8E5E1]"}`
-                        } />
-
-                      )}
-                      </div>
-                      <span className="text-sm text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
-                        {product.rating} ({product.reviews})
-                      </span>
-                    </div>
-                    
-                    {/* Action Buttons Row - All Inline */}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleExpressInterest(product);
-                        }}
-                        disabled={addingToWishlist}
-                        className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
-                        style={{ fontFamily: "var(--font-accent)" }}
-                      >
-                        <Heart className="w-4 h-4 mr-2" />
-                        {addingToWishlist ? "Adding..." : "Interested"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setQuickViewProduct(product);
-                        }}
-                        className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
-                        style={{ fontFamily: "var(--font-accent)" }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        asChild
-                        className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
-                        style={{ fontFamily: "var(--font-accent)" }}
-                      >
-                        <Link href={`/products/${product.id}`}>
-                          <ExternalLink className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </div>
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i} className="overflow-hidden border-2 animate-pulse">
+                  <div className="h-80 bg-gray-200" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-1/3" />
+                    <div className="h-6 bg-gray-200 rounded w-2/3" />
+                    <div className="h-4 bg-gray-200 rounded w-full" />
                   </div>
                 </Card>
-              </motion.div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 perspective-container">
+              {filteredProducts.map((product, idx) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  layout>
+                  <Card className="group overflow-hidden border-2 border-transparent hover:border-[#E85D75] transition-all duration-300 hover:shadow-3d bg-white rounded-3xl card-3d">
+                    <div className="relative h-80 overflow-hidden">
+                      <div 
+                        onClick={() => setQuickViewProduct(product)}
+                        className="cursor-pointer w-full h-full"
+                      >
+                        <motion.img
+                        whileHover={{ scale: 1.15, rotateZ: 2 }}
+                        transition={{ duration: 0.5 }}
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        style={{ transformStyle: "preserve-3d" }} />
+                      </div>
+                        <motion.div
+                        className="absolute top-4 right-4"
+                        whileHover={{ scale: 1.1, rotate: 5 }}>
+                          <span className="bg-[#F4A261] text-[#2C2C2E] text-xs font-bold px-3 py-1.5 rounded-full shadow-3d" style={{ fontFamily: "var(--font-accent)" }}>
+                            {product.badge}
+                          </span>
+                        </motion.div>
+                    </div>
+                    
+                    <div className="p-6">
+                      <p className="text-sm text-[#88A85D] font-semibold mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-accent)" }}>
+                        {product.category}
+                      </p>
+                      
+                      <Link href={`/products/${product.id}`} className="cursor-pointer">
+                        <h3 className="text-xl font-bold mb-2 group-hover:text-[#E85D75] transition-colors text-[#2C2C2E]" style={{ fontFamily: "var(--font-heading)" }}>
+                          {product.name}
+                        </h3>
+                      </Link>
+                      
+                      {/* Star Rating */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < Math.floor(product.rating) ?
+                                "fill-[#F4A261] text-[#F4A261]" :
+                                "text-[#E8E5E1]"}`
+                              } />
+                          ))}
+                        </div>
+                        <span className="text-sm text-[#5D4037]/60" style={{ fontFamily: "var(--font-body)" }}>
+                          {product.rating} ({product.reviews})
+                        </span>
+                      </div>
+                      
+                      {/* Action Buttons Row - All Inline */}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleExpressInterest(product);
+                          }}
+                          disabled={addingToWishlist}
+                          className="flex-1 bg-[#E85D75] hover:bg-[#E85D75]/90 text-white rounded-full btn-3d cursor-pointer"
+                          style={{ fontFamily: "var(--font-accent)" }}
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          {addingToWishlist ? "Adding..." : "Interested"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setQuickViewProduct(product);
+                          }}
+                          className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
+                          style={{ fontFamily: "var(--font-accent)" }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          className="border-2 border-[#E85D75]/20 hover:border-[#E85D75] hover:bg-[#E85D75]/5 text-[#E85D75] rounded-full cursor-pointer"
+                          style={{ fontFamily: "var(--font-accent)" }}
+                        >
+                          <Link href={`/products/${product.id}`}>
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
           
           <motion.div
             initial={{ opacity: 0 }}
