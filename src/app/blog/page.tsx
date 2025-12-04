@@ -426,48 +426,6 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Newsletter CTA */}
-      <section className="py-24 bg-gradient-to-br from-[#E85D75] via-[#F4A261] to-[#A67C52] text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] bg-repeat" />
-        </div>
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl sm:text-5xl font-black mb-6" style={{ fontFamily: "var(--font-heading)" }}>
-              Get Weekly <span className="text-[#FAFAF8]">Wellness Tips</span>
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto" style={{ fontFamily: "var(--font-body)" }}>
-              Join 10,000+ readers receiving expert nutrition advice, healthy recipes, and exclusive offers
-            </p>
-            
-            <div className="max-w-md mx-auto flex gap-3">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="bg-white/95 border-0 text-[#2C2C2E] rounded-full px-6 py-6 text-lg shadow-3d"
-                style={{ fontFamily: "var(--font-body)" }}
-              />
-              <Button 
-                size="lg"
-                className="bg-white text-[#E85D75] hover:bg-white/90 font-bold rounded-full shadow-3d btn-3d px-8"
-                style={{ fontFamily: "var(--font-accent)" }}
-              >
-                Subscribe
-              </Button>
-            </div>
-            
-            <p className="text-sm text-white/80 mt-4" style={{ fontFamily: "var(--font-body)" }}>
-              No spam, unsubscribe anytime
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       <Footer />
     </div>
   )

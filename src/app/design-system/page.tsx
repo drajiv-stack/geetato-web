@@ -129,7 +129,7 @@ export default function DesignSystemPage() {
                   Shop Now
                 </Button>
                 <Button size="default" className="bg-[var(--teal)] hover:bg-[var(--teal-dark)] text-white">
-                  Add to Cart
+                  Express Interest
                 </Button>
                 <Button size="sm" className="bg-[var(--green)] hover:bg-[var(--green)]/80 text-white">
                   Small Button
