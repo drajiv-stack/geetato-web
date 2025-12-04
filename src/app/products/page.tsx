@@ -81,14 +81,26 @@ export default function ProductsPage() {
       try {
         const res = await fetch("/api/products-new")
         if (res.ok) {
-          const products = await res.json()
+          const data = await res.json()
           
-          // Products from API already include images, nutrition, ingredients, and highlights
-          setAllProducts(products)
+          // Fetch images for each product
+          const productsWithImages = await Promise.all(
+            data.map(async (product: any) => {
+              const imagesRes = await fetch(`/api/product-images?productId=${product.id}`)
+              const images = imagesRes.ok ? await imagesRes.json() : []
+              
+              return {
+                ...product,
+                images: images
+              }
+            })
+          )
+          
+          setAllProducts(productsWithImages)
           
           // Build subcategories dynamically
           const subCats: Record<string, Set<string>> = {}
-          products.forEach((p: Product) => {
+          productsWithImages.forEach((p: Product) => {
             if (!subCats[p.category]) {
               subCats[p.category] = new Set()
             }
