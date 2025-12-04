@@ -59,6 +59,7 @@ export default function Footer() {
   }, []);
 
   const companyName = siteSettings['company_name'] || "Geetato";
+  const logoUrl = siteSettings['logo_url'] || "https://geetato.com/wp-content/uploads/2025/09/logo-file1.png";
   const tagline = siteSettings['tagline'] || "Health-first Indian Delights";
   const description = siteSettings['description'] || "Freshly Indian. Global in Taste. Premium bakery delights crafted with ancient grains and modern nutrition for your wellness journey.";
   const email = siteSettings['email'] || "hello@geetato.com";
@@ -82,16 +83,23 @@ export default function Footer() {
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
-          {/* Brand Section */}
+          {/* Brand Section - Updated with Logo Image */}
           <div className="lg:col-span-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-3xl font-black text-[var(--geetato-pink)] mb-2">
-                {companyName}
-              </h3>
+              {/* Logo Image instead of text */}
+              <Link href="/" className="inline-block mb-4">
+                <motion.img
+                  src={logoUrl}
+                  alt={`${companyName} Logo`}
+                  className="h-12 w-auto"
+                  whileHover={{ scale: 1.05 }}
+                  style={{ transformStyle: "preserve-3d" }}
+                />
+              </Link>
               <p className="text-xs text-[var(--golden-amber)] mb-4 italic" style={{ fontFamily: 'Pacifico, cursive' }}>
                 {tagline}
               </p>
