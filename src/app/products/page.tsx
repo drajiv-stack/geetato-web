@@ -83,27 +83,12 @@ export default function ProductsPage() {
         if (res.ok) {
           const products = await res.json()
           
-          // Fetch images for each product
-          const productsWithImages = await Promise.all(
-            products.map(async (product: Product) => {
-              try {
-                const imgRes = await fetch(`/api/product-images?productId=${product.id}`)
-                if (imgRes.ok) {
-                  const images = await imgRes.json()
-                  return { ...product, images }
-                }
-              } catch (err) {
-                console.error(`Error fetching images for product ${product.id}:`, err)
-              }
-              return product
-            })
-          )
-          
-          setAllProducts(productsWithImages)
+          // Products from API already include images, nutrition, ingredients, and highlights
+          setAllProducts(products)
           
           // Build subcategories dynamically
           const subCats: Record<string, Set<string>> = {}
-          productsWithImages.forEach((p: Product) => {
+          products.forEach((p: Product) => {
             if (!subCats[p.category]) {
               subCats[p.category] = new Set()
             }
@@ -233,7 +218,7 @@ export default function ProductsPage() {
 
   const getPrimaryImage = (product: Product) => {
     const primaryImg = product.images?.find(img => img.isPrimary)
-    return primaryImg?.imageUrl || product.images?.[0]?.imageUrl || ""
+    return primaryImg?.imageUrl || product.images?.[0]?.imageUrl || "/placeholder-product.jpg"
   }
 
   // Sidebar Filter Component
