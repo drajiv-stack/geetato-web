@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
 
 const footerLinks = {
   Products: [
@@ -15,24 +16,63 @@ const footerLinks = {
     { label: "About Us", href: "/about" },
     { label: "Our Story", href: "/about" },
     { label: "B2B Solutions", href: "/b2b-solutions" },
+    { label: "Export Partner", href: "/export-partner" },
     { label: "Contact", href: "/contact" },
   ],
   Support: [
     { label: "Get a Sample", href: "/contact" },
-    { label: "Export Inquiry", href: "/b2b-solutions" },
+    { label: "Export Inquiry", href: "/export-partner" },
     { label: "Shipping Info", href: "/contact" },
     { label: "Privacy Policy", href: "/contact" },
   ],
 }
 
 const socialLinks = [
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
+  { icon: Facebook, platform: "facebook", label: "Facebook" },
+  { icon: Instagram, platform: "instagram", label: "Instagram" },
+  { icon: Twitter, platform: "twitter", label: "Twitter" },
+  { icon: Linkedin, platform: "linkedin", label: "LinkedIn" },
 ]
 
 export default function Footer() {
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
+
+  // Fetch site settings on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch site settings (includes social URLs)
+        const settingsRes = await fetch('/api/site-settings-new');
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          const settingsMap: Record<string, string> = {};
+          settings.forEach((setting: any) => {
+            settingsMap[setting.settingKey] = setting.settingValue;
+          });
+          setSiteSettings(settingsMap);
+        }
+      } catch (error) {
+        console.error('Failed to fetch footer data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const companyName = siteSettings['company_name'] || "Geetato";
+  const tagline = siteSettings['tagline'] || "Health-first Indian Delights";
+  const description = siteSettings['description'] || "Freshly Indian. Global in Taste. Premium bakery delights crafted with ancient grains and modern nutrition for your wellness journey.";
+  const email = siteSettings['email'] || "hello@geetato.com";
+  const phone = siteSettings['phone'] || "+91 98765 43210";
+  const address = siteSettings['address'] || "Mumbai, Maharashtra, India";
+  
+  // Get social URLs from site settings
+  const socialUrls: Record<string, string> = {
+    facebook: siteSettings['facebook_url'] || "https://facebook.com/geetato",
+    instagram: siteSettings['instagram_url'] || "https://instagram.com/geetato",
+    twitter: siteSettings['twitter_url'] || "https://twitter.com/geetato",
+    linkedin: siteSettings['linkedin_url'] || "https://linkedin.com/company/geetato"
+  };
+
   return (
     <footer className="bg-[var(--cocoa-brown)] text-white relative overflow-hidden">
       {/* Background Pattern */}
@@ -50,27 +90,26 @@ export default function Footer() {
               viewport={{ once: true }}
             >
               <h3 className="text-3xl font-black text-[var(--geetato-pink)] mb-2">
-                Geetato
+                {companyName}
               </h3>
               <p className="text-xs text-[var(--golden-amber)] mb-4 italic" style={{ fontFamily: 'Pacifico, cursive' }}>
-                Health-first Indian Delights
+                {tagline}
               </p>
               <p className="text-white/70 mb-6 leading-relaxed">
-                Freshly Indian. Global in Taste. Premium bakery delights crafted with 
-                ancient grains and modern nutrition for your wellness journey.
+                {description}
               </p>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 text-white/60">
+                <a href={`mailto:${email}`} className="flex items-center space-x-3 text-white/60 hover:text-white transition-colors">
                   <Mail className="w-5 h-5 text-[var(--golden-amber)]" />
-                  <span>hello@geetato.com</span>
-                </div>
-                <div className="flex items-center space-x-3 text-white/60">
+                  <span>{email}</span>
+                </a>
+                <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center space-x-3 text-white/60 hover:text-white transition-colors">
                   <Phone className="w-5 h-5 text-[var(--golden-amber)]" />
-                  <span>+91 98765 43210</span>
-                </div>
+                  <span>{phone}</span>
+                </a>
                 <div className="flex items-center space-x-3 text-white/60">
                   <MapPin className="w-5 h-5 text-[var(--golden-amber)]" />
-                  <span>Mumbai, Maharashtra, India</span>
+                  <span>{address}</span>
                 </div>
               </div>
             </motion.div>
@@ -106,7 +145,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex flex-col sm:flex-row items-center gap-4 text-white/50 text-sm">
-              <p>© 2026 Geetato. All rights reserved.</p>
+              <p>© 2026 {companyName}. All rights reserved.</p>
               <span className="hidden sm:inline">|</span>
               <p className="flex items-center gap-2">
                 <span className="text-[var(--pistachio-green)]">✓</span> FSSAI Certified
@@ -120,7 +159,9 @@ export default function Footer() {
               {socialLinks.map((social) => (
                 <motion.a
                   key={social.label}
-                  href={social.href}
+                  href={socialUrls[social.platform]}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   className="w-10 h-10 rounded-full bg-white/10 hover:bg-[var(--geetato-pink)] flex items-center justify-center transition-colors"

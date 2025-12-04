@@ -149,7 +149,7 @@ export const products = sqliteTable('products', {
   badge: text('badge'),
   featured: integer('featured', { mode: 'boolean' }).default(false).notNull(),
   rating: real('rating').default(0).notNull(),
-  reviews: integer('reviews').default(0).notNull(),
+  reviews: integer('reviews_count').default(0).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()).notNull(),
 });

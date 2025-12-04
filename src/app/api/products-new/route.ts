@@ -54,7 +54,23 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    return NextResponse.json(results, { status: 200 });
+    // Map database fields to API response format
+    const mappedResults = results.map(product => ({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      category: product.category,
+      subCategory: product.subCategory,
+      description: product.description,
+      badge: product.badge,
+      featured: product.featured,
+      rating: product.rating,
+      reviews: product.reviews,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt
+    }));
+
+    return NextResponse.json(mappedResults, { status: 200 });
   } catch (error) {
     console.error('GET products error:', error);
     return NextResponse.json(
